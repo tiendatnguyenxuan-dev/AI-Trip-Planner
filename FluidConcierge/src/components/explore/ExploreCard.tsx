@@ -5,14 +5,15 @@ import TagBadge from './TagBadge';
 
 interface ExploreCardProps {
   item: ExploreItem;
-  onPlan: (item: ExploreItem) => void;
+  onClick: (item: ExploreItem) => void;
 }
 
-const ExploreCard: React.FC<ExploreCardProps> = ({ item, onPlan }) => {
+const ExploreCard: React.FC<ExploreCardProps> = ({ item, onClick }) => {
   return (
     <motion.div
       whileHover={{ y: -8 }}
-      className="group relative bg-surface rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-all border border-primary/5 h-full flex flex-col"
+      onClick={() => onClick(item)}
+      className="group relative bg-surface rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-all border border-primary/5 h-full flex flex-col cursor-pointer"
     >
       {/* Image Header */}
       <div className="relative h-56 overflow-hidden">
@@ -34,6 +35,11 @@ const ExploreCard: React.FC<ExploreCardProps> = ({ item, onPlan }) => {
             <span className="material-symbols-outlined text-sm">local_fire_department</span>
           </div>
         )}
+
+        <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-black/40 backdrop-blur px-2 py-1 rounded-lg">
+          <span className="material-symbols-outlined text-yellow-400 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+          <span className="text-white text-xs font-bold">{item.averageRating?.toFixed(1) || '0.0'}</span>
+        </div>
 
         <div className="absolute bottom-4 left-4 right-4">
           <span className="text-white/70 text-[10px] font-bold uppercase tracking-[0.2em]">{item.destination}</span>
@@ -66,10 +72,10 @@ const ExploreCard: React.FC<ExploreCardProps> = ({ item, onPlan }) => {
         </div>
 
         <button
-          onClick={() => onPlan(item)}
+          onClick={(e) => { e.stopPropagation(); onClick(item); }}
           className="w-full py-4 bg-cta text-white rounded-2xl font-bold text-sm shadow-lg shadow-cta/20 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group-hover:gap-3 cursor-pointer"
         >
-          Lên kế hoạch ngay
+          Khám phá
           <span className="material-symbols-outlined text-sm">arrow_forward</span>
         </button>
       </div>

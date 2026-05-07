@@ -23,8 +23,12 @@ public class ExploreItemEntity {
 
     private String title;
     private String destination;
+    
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 50)
     private ExploreType type;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -38,4 +42,15 @@ public class ExploreItemEntity {
     private Integer durationDays;
     private String thumbnailUrl;
     private Double popularityScore;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Double averageRating = 0.0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer reviewCount = 0;
+
+    @Version
+    private Long version;
 }

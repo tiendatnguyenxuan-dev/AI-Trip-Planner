@@ -11,4 +11,6 @@ public interface SharedContentRepository {
     SharedContent save(SharedContent sharedContent);
     Optional<SharedContent> findById(UUID id);
     List<SharedContent> getTrending(ShareType type, int limit);
+    boolean existsByUser_IdAndRefIdAndType(UUID userId, UUID refId, ShareType type);
+    List<SharedContent> findByRefId(UUID refId);
 }

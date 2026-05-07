@@ -12,6 +12,10 @@ import type {
   ActivityUpdateRequest,
   ShareContentRequest,
   SharedContentResponse,
+  CommentRequest,
+  CommentResponse,
+  RateRequest,
+  ExploreItem,
 } from '../types/trip';
 
 // Base API client pointing at Spring Boot backend
@@ -99,19 +103,6 @@ export const aiApi = {
 
 // ── Explore endpoints ────────────────────────────────────────────────────────
 
-export interface ExploreItem {
-  id: string;
-  title: string;
-  destination: string;
-  type: 'PLACE' | 'EXPERIENCE' | 'TEMPLATE';
-  tags: string[];
-  minBudget: number;
-  maxBudget: number;
-  durationDays: number;
-  thumbnailUrl: string;
-  popularityScore: number;
-}
-
 export interface ExplorePageResponse {
   content: ExploreItem[];
   totalPages: number;
@@ -130,6 +121,9 @@ export const exploreApi = {
   }): Promise<ExplorePageResponse> =>
     apiClient.get('/explore', { params }).then(r => r.data),
 
+  getById: (id: string): Promise<ExploreItem> =>
+    apiClient.get(`/explore/${id}`).then(r => r.data),
+
   getTrending: (): Promise<ExploreItem[]> =>
     apiClient.get('/explore/trending').then(r => r.data),
 
@@ -140,13 +134,28 @@ export const exploreApi = {
 // ── Community endpoints ────────────────────────────────────────────────────────
 
 export const communityApi = {
-  shareContent: (body: ShareContentRequest): Promise<SharedContentResponse> =>
-    apiClient.post('/community/share', body).then(r => r.data),
+  shareContent: (request: ShareContentRequest, image?: File): Promise<SharedContentResponse> => {
+    const formData = new FormData();
+    formData.append('request', new Blob([JSON.stringify(request)], { type: 'application/json' }));
+    if (image) {
+      formData.append('image', image);
+    }
+    return apiClient.post('/community/share', formData).then(r => r.data);
+  },
 
-  upvote: (id: string): Promise<SharedContentResponse> =>
-    apiClient.post(`/community/${id}/vote`).then(r => r.data),
+  rate: (id: string, stars: number): Promise<SharedContentResponse> =>
+    apiClient.post(`/community/${id}/rate`, { stars }).then(r => r.data),
 
-  getTrending: (type: 'ACTIVITY' | 'TRIP', limit: number = 6): Promise<SharedContentResponse[]> =>
+  addComment: (id: string, content: string): Promise<CommentResponse> =>
+    apiClient.post(`/community/${id}/comments`, { content }).then(r => r.data),
+
+  getComments: (id: string): Promise<CommentResponse[]> =>
+    apiClient.get(`/community/${id}/comments`).then(r => r.data),
+
+  getTrending: (type: 'ACTIVITY' | 'TRIP' | 'EXPLORE_ITEM', limit: number = 6): Promise<SharedContentResponse[]> =>
     apiClient.get('/community/trending', { params: { type, limit } }).then(r => r.data),
+
+  getExploreItemReviews: (id: string): Promise<SharedContentResponse[]> =>
+    apiClient.get(`/community/explore/${id}/reviews`).then(r => r.data),
 };
 

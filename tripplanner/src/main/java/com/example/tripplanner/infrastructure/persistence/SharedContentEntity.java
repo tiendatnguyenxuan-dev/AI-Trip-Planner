@@ -31,7 +31,7 @@ public class SharedContentEntity {
     private UserEntity user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private ShareType type;
 
     @Column(name = "ref_id", nullable = false, columnDefinition = "CHAR(36)")
@@ -41,11 +41,27 @@ public class SharedContentEntity {
     private String content; // JSON storing description, tips, user review
 
     @Column(name = "rating", nullable = false)
-    private Double rating; // The rating given by the sharer (e.g. 4.8)
+    private Double rating; // Current average rating
+
+    @Column(name = "total_rating_sum", nullable = false)
+    @Builder.Default
+    private Double totalRatingSum = 0.0;
 
     @Column(name = "total_votes", nullable = false)
     @Builder.Default
     private Integer totalVotes = 0; // Number of upvotes from community
+    
+    @Column(name = "image_url")
+    private String imageUrl;
+    
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    
+    @Column(name = "cost")
+    private Double cost;
+    
+    @Column(name = "duration")
+    private Integer duration;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

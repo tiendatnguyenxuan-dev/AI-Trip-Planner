@@ -130,19 +130,59 @@ export interface UserResponse {
 export interface SharedContentResponse {
   id: string;
   user: UserResponse;
-  type: 'ACTIVITY' | 'TRIP';
+  type: 'ACTIVITY' | 'TRIP' | 'EXPLORE_ITEM';
   refId: string;
   content: string; // JSON string
   rating: number;
+  totalRatingSum: number;
   totalVotes: number;
+  imageUrl?: string;
+  description?: string;
+  cost?: number;
+  duration?: number;
   status: string;
   createdAt: string;
   referenceData?: any; // ActivityResponse | TripResponse
 }
 
 export interface ShareContentRequest {
-  type: 'ACTIVITY' | 'TRIP';
+  type: 'ACTIVITY' | 'TRIP' | 'EXPLORE_ITEM';
   refId: string;
-  content: string; // JSON string with description, tips
+  content: string; // JSON string with extra data
   rating: number;
+  description?: string;
+  cost?: number;
+  duration?: number;
+}
+
+export interface CommentRequest {
+  content: string;
+}
+
+export interface CommentResponse {
+  id: string;
+  sharedContentId: string;
+  user: UserResponse;
+  content: string;
+  createdAt: string;
+}
+
+export interface RateRequest {
+  stars: number;
+}
+
+export interface ExploreItem {
+  id: string;
+  title: string;
+  destination: string;
+  type: string;
+  tags: string[];
+  minBudget: number;
+  maxBudget: number;
+  durationDays: number;
+  thumbnailUrl: string;
+  popularityScore: number;
+  description?: string;
+  averageRating: number;
+  reviewCount: number;
 }

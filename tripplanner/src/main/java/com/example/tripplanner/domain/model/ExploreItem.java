@@ -20,4 +20,10 @@ public class ExploreItem {
     private Integer durationDays;
     private String thumbnailUrl;
     private Double popularityScore;
+    private String description;
+    @Builder.Default
+    private Double averageRating = 0.0;
+    @Builder.Default
+    private Integer reviewCount = 0;
+    private Long version;
 }

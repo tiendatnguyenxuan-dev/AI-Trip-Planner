@@ -1,5 +1,6 @@
 package com.example.tripplanner.interfaces.exception;
 
+import com.example.tripplanner.domain.exception.AlreadyReviewedException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,15 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AlreadyReviewedException.class)
+    public ResponseEntity<Map<String, Object>> handleAlreadyReviewed(AlreadyReviewedException ex,
+                                                               HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(
+                HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI()
+        ));
+    }
+
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException ex,

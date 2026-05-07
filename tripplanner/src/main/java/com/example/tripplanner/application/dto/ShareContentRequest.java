@@ -9,6 +9,9 @@ import java.util.UUID;
 public class ShareContentRequest {
     private ShareType type;
     private UUID refId; // Activity ID or Trip ID
-    private String content; // JSON string with description, tips, etc.
+    private String content; // JSON string for extra data if needed
     private Double rating;
+    private String description;
+    private Double cost;
+    private Integer duration;
 }

@@ -14,4 +14,8 @@ public interface JpaSharedContentRepository extends JpaRepository<SharedContentE
     
     @Query("SELECT s FROM SharedContentEntity s WHERE s.type = :type AND s.status = 'PUBLISHED' ORDER BY s.totalVotes DESC, s.createdAt DESC")
     List<SharedContentEntity> findTopTrending(ShareType type, Pageable pageable);
+
+    boolean existsByUser_IdAndRefIdAndType(UUID userId, UUID refId, ShareType type);
+
+    List<SharedContentEntity> findByRefIdOrderByCreatedAtDesc(UUID refId);
 }

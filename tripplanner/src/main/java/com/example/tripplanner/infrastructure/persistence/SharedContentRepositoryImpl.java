@@ -38,4 +38,16 @@ public class SharedContentRepositoryImpl implements SharedContentRepository {
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public boolean existsByUser_IdAndRefIdAndType(UUID userId, UUID refId, ShareType type) {
+        return jpaRepository.existsByUser_IdAndRefIdAndType(userId, refId, type);
+    }
+
+    @Override
+    public List<SharedContent> findByRefId(UUID refId) {
+        return jpaRepository.findByRefIdOrderByCreatedAtDesc(refId).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
 }

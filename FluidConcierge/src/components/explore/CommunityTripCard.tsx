@@ -19,8 +19,10 @@ const CommunityTripCard: React.FC<CommunityTripCardProps> = ({ item, onUpvote })
     }
   }, [item.content]);
 
-  // Use a fallback image or the trip's destination
-  const imageUrl = `/assets/explore/phuquoc_luxury.png`; // Fallback
+  // Use the uploaded image, reference image, or a fallback
+  const imageUrl = item.imageUrl 
+    ? `http://localhost:8081${item.imageUrl}` 
+    : `/assets/explore/phuquoc_luxury.png`;
 
   return (
     <motion.div
@@ -55,8 +57,23 @@ const CommunityTripCard: React.FC<CommunityTripCardProps> = ({ item, onUpvote })
         </div>
 
         <p className="text-slate-600 text-sm line-clamp-2 mb-4 flex-1">
-          "{parsedContent.description}"
+          "{item.description || parsedContent.description}"
         </p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+           {item.cost && (
+             <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md">
+               <span className="material-symbols-outlined text-[14px]">payments</span>
+               {(item.cost / 1000000).toFixed(1)}M VNĐ
+             </div>
+           )}
+           {item.duration && (
+             <div className="flex items-center gap-1 text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded-md">
+               <span className="material-symbols-outlined text-[14px]">schedule</span>
+               {item.duration} Ngày
+             </div>
+           )}
+        </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-emerald-100">
           <div className="flex items-center gap-2">

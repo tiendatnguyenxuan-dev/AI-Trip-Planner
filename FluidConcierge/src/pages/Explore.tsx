@@ -8,6 +8,9 @@ import ExploreCard from '../components/explore/ExploreCard';
 import FilterBar from '../components/explore/FilterBar';
 import CommunityTripCard from '../components/explore/CommunityTripCard';
 import CommunityActivityCard from '../components/explore/CommunityActivityCard';
+import ShareModal from '../components/ShareModal';
+import SharedContentDetailModal from '../components/explore/SharedContentDetailModal';
+import ExploreDetailModal from '../components/explore/ExploreDetailModal';
 
 // Import hero images from src/assets
 import dalatImg from '../assets/dalat.jpg';
@@ -27,6 +30,11 @@ const Explore: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [duration, setDuration] = useState<number | null>(null);
   const [currentHeroBg, setCurrentHeroBg] = useState(0);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareType, setShareType] = useState<'ACTIVITY' | 'TRIP'>('ACTIVITY');
+  
+  const [selectedDetailItem, setSelectedDetailItem] = useState<SharedContentResponse | null>(null);
+  const [selectedExploreItem, setSelectedExploreItem] = useState<ExploreItem | null>(null);
 
   const HERO_BGS = [
     '/assets/explore/hanoi_culture.png',
@@ -78,14 +86,18 @@ const Explore: React.FC = () => {
     });
   };
 
-  const handleUpvote = async (id: string) => {
+  const handleExploreCardClick = (item: ExploreItem) => {
+    setSelectedExploreItem(item);
+  };
+
+  const handleRate = async (id: string, stars: number = 5) => {
     try {
-      await communityApi.upvote(id);
+      const updated = await communityApi.rate(id, stars);
       // Optimistically update
-      setTrendingTrips(prev => prev.map(t => t.id === id ? { ...t, totalVotes: t.totalVotes + 1 } : t));
-      setHotActivities(prev => prev.map(a => a.id === id ? { ...a, totalVotes: a.totalVotes + 1 } : a));
+      setTrendingTrips(prev => prev.map(t => t.id === id ? { ...t, rating: updated.rating, totalVotes: updated.totalVotes } : t));
+      setHotActivities(prev => prev.map(a => a.id === id ? { ...a, rating: updated.rating, totalVotes: updated.totalVotes } : a));
     } catch (error) {
-      console.error('Upvote failed', error);
+      console.error('Rate failed', error);
     }
   };
 
@@ -185,6 +197,23 @@ const Explore: React.FC = () => {
               </button>
             </div>
           </div>
+          
+          <div className="mt-8 flex justify-center gap-4 relative z-20">
+            <button 
+              onClick={() => { setShareType('TRIP'); setIsShareModalOpen(true); }}
+              className="px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-xl font-bold transition-all flex items-center gap-2 border border-white/20"
+            >
+              <span className="material-symbols-outlined">flight_takeoff</span>
+              Chia sẻ Chuyến đi
+            </button>
+            <button 
+              onClick={() => { setShareType('ACTIVITY'); setIsShareModalOpen(true); }}
+              className="px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-xl font-bold transition-all flex items-center gap-2 border border-white/20"
+            >
+              <span className="material-symbols-outlined">local_activity</span>
+              Chia sẻ Trải nghiệm
+            </button>
+          </div>
         </div>
       </div>
 
@@ -213,7 +242,9 @@ const Explore: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {trendingTrips.map(item => (
-                  <CommunityTripCard key={item.id} item={item} onUpvote={handleUpvote} />
+                  <div key={item.id} onClick={() => setSelectedDetailItem(item)}>
+                    <CommunityTripCard item={item} onUpvote={(id) => handleRate(id, 5)} />
+                  </div>
                 ))}
               </div>
             </section>
@@ -233,7 +264,9 @@ const Explore: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {hotActivities.map(item => (
-                  <CommunityActivityCard key={item.id} item={item} onUpvote={handleUpvote} />
+                  <div key={item.id} onClick={() => setSelectedDetailItem(item)} className="cursor-pointer">
+                    <CommunityActivityCard item={item} onUpvote={(id) => handleRate(id, 5)} />
+                  </div>
                 ))}
               </div>
             </section>
@@ -248,13 +281,37 @@ const Explore: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <AnimatePresence mode='popLayout'>
                 {filteredItems.map(item => (
-                  <ExploreCard key={item.id} item={item} onPlan={() => handlePlan(item)} />
+                  <ExploreCard key={item.id} item={item} onClick={handleExploreCardClick} />
                 ))}
               </AnimatePresence>
             </div>
           </section>
         </div>
       </div>
+      
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        type={shareType}
+        refId="temp-ref-id" // In a real flow, they select a trip or activity first
+        title={shareType === 'TRIP' ? "Chia sẻ lịch trình của bạn" : "Chia sẻ một địa điểm thú vị"}
+        onSuccess={() => {
+           window.location.reload();
+        }}
+      />
+      
+      <SharedContentDetailModal 
+        isOpen={!!selectedDetailItem}
+        onClose={() => setSelectedDetailItem(null)}
+        item={selectedDetailItem}
+      />
+
+      <ExploreDetailModal
+        isOpen={!!selectedExploreItem}
+        onClose={() => setSelectedExploreItem(null)}
+        exploreItem={selectedExploreItem}
+        onPlan={handlePlan}
+      />
     </div>
   );
 };

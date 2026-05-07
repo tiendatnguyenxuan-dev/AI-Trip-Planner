@@ -1,5 +1,6 @@
 package com.example.tripplanner.interfaces.controller;
 
+import com.example.tripplanner.application.usecase.GetExploreItemByIdUseCase;
 import com.example.tripplanner.application.usecase.GetExploreItemsUseCase;
 import com.example.tripplanner.application.usecase.GetRecommendedExploreItemsUseCase;
 import com.example.tripplanner.application.usecase.GetTrendingExploreItemsUseCase;
@@ -20,6 +21,7 @@ import java.util.List;
 public class ExploreController {
 
     private final GetExploreItemsUseCase getExploreItemsUseCase;
+    private final GetExploreItemByIdUseCase getExploreItemByIdUseCase;
     private final GetTrendingExploreItemsUseCase getTrendingExploreItemsUseCase;
     private final GetRecommendedExploreItemsUseCase getRecommendedExploreItemsUseCase;
 
@@ -32,6 +34,11 @@ public class ExploreController {
             @RequestParam(required = false) List<String> tags,
             Pageable pageable) {
         return ResponseEntity.ok(getExploreItemsUseCase.execute(destination, minBudget, maxBudget, durationDays, tags, pageable));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ExploreItem> getExploreItemById(@PathVariable java.util.UUID id) {
+        return ResponseEntity.ok(getExploreItemByIdUseCase.execute(id));
     }
 
     @GetMapping("/trending")

@@ -267,6 +267,10 @@ public class PersistenceMapper {
                 .durationDays(entity.getDurationDays())
                 .thumbnailUrl(entity.getThumbnailUrl())
                 .popularityScore(entity.getPopularityScore())
+                .description(entity.getDescription())
+                .averageRating(entity.getAverageRating())
+                .reviewCount(entity.getReviewCount())
+                .version(entity.getVersion())
                 .build();
     }
 
@@ -278,12 +282,16 @@ public class PersistenceMapper {
                 .title(domain.getTitle())
                 .destination(domain.getDestination())
                 .type(domain.getType())
-                .tags(new ArrayList<>(domain.getTags()))
+                .tags(domain.getTags() != null ? new ArrayList<>(domain.getTags()) : new ArrayList<>())
                 .minBudget(domain.getMinBudget())
                 .maxBudget(domain.getMaxBudget())
                 .durationDays(domain.getDurationDays())
                 .thumbnailUrl(domain.getThumbnailUrl())
                 .popularityScore(domain.getPopularityScore())
+                .description(domain.getDescription())
+                .averageRating(domain.getAverageRating())
+                .reviewCount(domain.getReviewCount())
+                .version(domain.getVersion())
                 .build();
     }
 
@@ -325,7 +333,12 @@ public class PersistenceMapper {
                 .refId(domain.getRefId())
                 .content(domain.getContent())
                 .rating(domain.getRating())
+                .totalRatingSum(domain.getTotalRatingSum())
                 .totalVotes(domain.getTotalVotes())
+                .imageUrl(domain.getImageUrl())
+                .description(domain.getDescription())
+                .cost(domain.getCost())
+                .duration(domain.getDuration())
                 .status(domain.getStatus())
                 .createdAt(domain.getCreatedAt())
                 .build();
@@ -340,8 +353,59 @@ public class PersistenceMapper {
                 .refId(entity.getRefId())
                 .content(entity.getContent())
                 .rating(entity.getRating())
+                .totalRatingSum(entity.getTotalRatingSum())
                 .totalVotes(entity.getTotalVotes())
+                .imageUrl(entity.getImageUrl())
+                .description(entity.getDescription())
+                .cost(entity.getCost())
+                .duration(entity.getDuration())
                 .status(entity.getStatus())
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
+
+    // Comment mapping
+    public CommentEntity toEntity(Comment domain) {
+        if (domain == null) return null;
+        return CommentEntity.builder()
+                .id(domain.getId())
+                .sharedContentId(domain.getSharedContentId())
+                .user(toEntity(domain.getUser()))
+                .content(domain.getContent())
+                .createdAt(domain.getCreatedAt())
+                .build();
+    }
+
+    public Comment toDomain(CommentEntity entity) {
+        if (entity == null) return null;
+        return Comment.builder()
+                .id(entity.getId())
+                .sharedContentId(entity.getSharedContentId())
+                .user(toDomain(entity.getUser()))
+                .content(entity.getContent())
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
+
+    // UserVote mapping
+    public UserVoteEntity toEntity(UserVote domain) {
+        if (domain == null) return null;
+        return UserVoteEntity.builder()
+                .id(domain.getId())
+                .sharedContentId(domain.getSharedContentId())
+                .userId(domain.getUserId())
+                .stars(domain.getStars())
+                .createdAt(domain.getCreatedAt())
+                .build();
+    }
+
+    public UserVote toDomain(UserVoteEntity entity) {
+        if (entity == null) return null;
+        return UserVote.builder()
+                .id(entity.getId())
+                .sharedContentId(entity.getSharedContentId())
+                .userId(entity.getUserId())
+                .stars(entity.getStars())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
