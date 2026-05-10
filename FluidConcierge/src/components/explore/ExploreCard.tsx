@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { ExploreItem } from '../../services/api';
+import type { ExploreItem } from '../../types/trip';
 import TagBadge from './TagBadge';
 
 interface ExploreCardProps {

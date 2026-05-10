@@ -2,7 +2,7 @@ package com.example.tripplanner.application.usecase;
 
 import com.example.tripplanner.application.dto.ShareContentRequest;
 import com.example.tripplanner.application.dto.SharedContentResponse;
-import com.example.tripplanner.application.mapper.TripMapper;
+import com.example.tripplanner.application.mapper.SharedContentMapper;
 import com.example.tripplanner.domain.exception.AlreadyReviewedException;
 import com.example.tripplanner.domain.model.*;
 import com.example.tripplanner.domain.port.ActivityRepository;
@@ -10,11 +10,15 @@ import com.example.tripplanner.domain.port.ExploreRepository;
 import com.example.tripplanner.domain.port.SharedContentRepository;
 import com.example.tripplanner.domain.port.TripRepository;
 import com.example.tripplanner.domain.port.UserRepository;
+import com.example.tripplanner.infrastructure.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,11 +29,21 @@ public class ShareContentUseCase {
     private final ActivityRepository activityRepository;
     private final TripRepository tripRepository;
     private final ExploreRepository exploreRepository;
+    private final FileStorageService fileStorageService;
 
     @Transactional
-    public SharedContentResponse execute(UUID userId, ShareContentRequest request, String imageUrl) {
+    public SharedContentResponse execute(UUID userId, ShareContentRequest request, List<MultipartFile> images) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Store files and get URLs
+        List<String> imageUrls = java.util.Collections.emptyList();
+        if (images != null && !images.isEmpty()) {
+            imageUrls = images.stream()
+                    .map(fileStorageService::storeFile)
+                    .filter(url -> url != null && !url.isEmpty())
+                    .collect(Collectors.toList());
+        }
 
         double newRating = request.getRating() != null ? request.getRating() : 0.0;
 
@@ -74,27 +88,12 @@ public class ShareContentUseCase {
                 .description(request.getDescription())
                 .cost(request.getCost())
                 .duration(request.getDuration())
-                .imageUrl(imageUrl)
+                .imageUrls(imageUrls)
                 .status(ShareStatus.PUBLISHED)
                 .build();
 
         SharedContent saved = sharedContentRepository.save(content);
 
-        return SharedContentResponse.builder()
-                .id(saved.getId())
-                .user(TripMapper.toUserResponse(saved.getUser()))
-                .type(saved.getType())
-                .refId(saved.getRefId())
-                .content(saved.getContent())
-                .rating(saved.getRating())
-                .totalRatingSum(saved.getTotalRatingSum())
-                .totalVotes(saved.getTotalVotes())
-                .description(saved.getDescription())
-                .cost(saved.getCost())
-                .duration(saved.getDuration())
-                .imageUrl(saved.getImageUrl())
-                .status(saved.getStatus())
-                .createdAt(saved.getCreatedAt())
-                .build();
+        return SharedContentMapper.toResponse(saved);
     }
 }

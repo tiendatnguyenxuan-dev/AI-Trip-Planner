@@ -31,6 +31,7 @@ C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\ja
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\application\dto\TripUpdateRequest.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\application\dto\UserResponse.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\application\mapper\AiLogMapper.java
+C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\application\mapper\SharedContentMapper.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\application\mapper\TripMapper.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\application\orchestrator\AIOrchestrator.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\application\orchestrator\AiResponseParser.java
@@ -105,7 +106,6 @@ C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\ja
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\infrastructure\ai\OpenRouterAiService.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\infrastructure\config\CorsConfig.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\infrastructure\config\DataMigrationRunner.java
-C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\infrastructure\config\DataSeeder.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\infrastructure\config\ReviewSeeder.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\infrastructure\config\SecurityConfig.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\infrastructure\config\StaticResourceConfig.java
@@ -152,10 +152,10 @@ C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\ja
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\controller\AiController.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\controller\AiLogController.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\controller\AnalyticsController.java
+C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\controller\AuthController.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\controller\CommunityController.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\controller\ExploreController.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\controller\ItineraryController.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\controller\TripController.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\interfaces\exception\GlobalExceptionHandler.java
-C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\presentation\AuthController.java
 C:\Users\acer\OneDrive - Saigon University\Desktop\Nhom1\tripplanner\src\main\java\com\example\tripplanner\TripplannerApplication.java

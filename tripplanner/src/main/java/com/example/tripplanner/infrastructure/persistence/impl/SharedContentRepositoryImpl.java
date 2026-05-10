@@ -1,8 +1,11 @@
-package com.example.tripplanner.infrastructure.persistence;
+package com.example.tripplanner.infrastructure.persistence.impl;
 
 import com.example.tripplanner.domain.model.ShareType;
 import com.example.tripplanner.domain.model.SharedContent;
 import com.example.tripplanner.domain.port.SharedContentRepository;
+import com.example.tripplanner.infrastructure.persistence.JpaSharedContentRepository;
+import com.example.tripplanner.infrastructure.persistence.PersistenceMapper;
+import com.example.tripplanner.infrastructure.persistence.SharedContentEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;

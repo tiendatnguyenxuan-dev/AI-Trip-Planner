@@ -57,6 +57,7 @@ com\example\tripplanner\application\dto\RegisterRequest.class
 com\example\tripplanner\application\dto\LoginRequest.class
 com\example\tripplanner\application\dto\CommentResponse$CommentResponseBuilder.class
 com\example\tripplanner\domain\model\ShareStatus.class
+com\example\tripplanner\application\mapper\SharedContentMapper.class
 com\example\tripplanner\domain\port\UserRepository.class
 com\example\tripplanner\domain\model\Role.class
 com\example\tripplanner\application\dto\AiLogDetailResponse$AiLogDetailResponseBuilder.class
@@ -74,7 +75,6 @@ com\example\tripplanner\domain\model\UserVote$UserVoteBuilder.class
 com\example\tripplanner\domain\port\TripRepository.class
 com\example\tripplanner\interfaces\controller\ExploreController.class
 com\example\tripplanner\infrastructure\persistence\RecommendationEntity.class
-com\example\tripplanner\infrastructure\config\DataSeeder.class
 com\example\tripplanner\domain\model\ActivityCandidate$ActivityCandidateBuilder.class
 com\example\tripplanner\infrastructure\config\SecurityConfig.class
 com\example\tripplanner\application\usecase\FinalizeTripPlanUseCase.class
@@ -114,11 +114,11 @@ com\example\tripplanner\infrastructure\persistence\ActivityRepositoryImpl.class
 com\example\tripplanner\application\usecase\ShareContentUseCase.class
 com\example\tripplanner\infrastructure\persistence\JpaActivityRepository.class
 com\example\tripplanner\application\mapper\TripMapper.class
+com\example\tripplanner\interfaces\controller\AuthController.class
 com\example\tripplanner\infrastructure\persistence\SharedContentEntity$SharedContentEntityBuilder.class
 com\example\tripplanner\infrastructure\persistence\CommentRepositoryImpl.class
 com\example\tripplanner\application\dto\ActivityCandidateResponse.class
 com\example\tripplanner\infrastructure\security\JwtAuthenticationFilter.class
-com\example\tripplanner\presentation\AuthController.class
 com\example\tripplanner\domain\model\Activity$ActivityBuilder.class
 com\example\tripplanner\domain\model\ExploreItem$ExploreItemBuilder.class
 com\example\tripplanner\application\dto\AiServiceParseRequest$AiServiceParseRequestBuilder.class

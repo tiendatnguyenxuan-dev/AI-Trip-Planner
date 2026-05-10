@@ -61,11 +61,15 @@ function TripCardSkeleton() {
 
 // ── Main component ──────────────────────────────────────────────────────────
 
+import ShareModal from '../components/ShareModal';
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [trips, setTrips] = useState<TripResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedTripToShare, setSelectedTripToShare] = useState<TripResponse | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -76,7 +80,11 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, [user?.id]);
 
-
+  const handleShareClick = (e: React.MouseEvent, trip: TripResponse) => {
+    e.stopPropagation();
+    setSelectedTripToShare(trip);
+    setShareModalOpen(true);
+  };
 
   return (
     <div className="pt-8 px-8 pb-12 max-w-7xl mx-auto font-sans">
@@ -147,7 +155,16 @@ export default function Dashboard() {
                 </div>
                 <div className="p-6 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-xl font-bold text-text font-display line-clamp-1 group-hover:text-primary transition-colors">{trip.title}</h4>
+                    <h4 className="text-xl font-bold text-text font-display line-clamp-1 group-hover:text-primary transition-colors pr-2">{trip.title}</h4>
+                    {(trip.status === 'CONFIRMED' || trip.status === 'GENERATED') && (
+                      <button 
+                        onClick={(e) => handleShareClick(e, trip)}
+                        className="p-1.5 bg-emerald-100/50 hover:bg-emerald-500 hover:text-white text-emerald-600 rounded-full transition-all flex-shrink-0"
+                        title="Chia sẻ chuyến đi này"
+                      >
+                        <span className="material-symbols-outlined text-sm">share</span>
+                      </button>
+                    )}
                   </div>
                   <p className="text-sm text-text-muted mb-6 flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">location_on</span>
@@ -197,6 +214,21 @@ export default function Dashboard() {
       >
         <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
       </button>
+
+      {/* Share Modal */}
+      {selectedTripToShare && (
+        <ShareModal 
+          isOpen={shareModalOpen} 
+          onClose={() => setShareModalOpen(false)} 
+          type="TRIP"
+          refId={selectedTripToShare.id}
+          title={selectedTripToShare.title || selectedTripToShare.destination}
+          subtitle={`${new Date(selectedTripToShare.startDate).toLocaleDateString('vi-VN')} - ${new Date(selectedTripToShare.endDate).toLocaleDateString('vi-VN')}`}
+          onSuccess={() => {
+            alert('Chia sẻ thành công!');
+          }}
+        />
+      )}
     </div>
   );
 }

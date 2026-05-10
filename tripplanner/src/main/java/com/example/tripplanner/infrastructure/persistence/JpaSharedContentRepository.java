@@ -18,4 +18,6 @@ public interface JpaSharedContentRepository extends JpaRepository<SharedContentE
     boolean existsByUser_IdAndRefIdAndType(UUID userId, UUID refId, ShareType type);
 
     List<SharedContentEntity> findByRefIdOrderByCreatedAtDesc(UUID refId);
+
+    List<SharedContentEntity> findByUser(UserEntity user);
 }

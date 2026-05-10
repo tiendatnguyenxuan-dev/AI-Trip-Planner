@@ -3,6 +3,7 @@ package com.example.tripplanner.interfaces.exception;
 import com.example.tripplanner.domain.exception.AlreadyReviewedException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,12 +14,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AlreadyReviewedException.class)
     public ResponseEntity<Map<String, Object>> handleAlreadyReviewed(AlreadyReviewedException ex,
                                                                HttpServletRequest request) {
+        log.warn("AlreadyReviewedException at {}: {}", request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(
                 HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI()
         ));
@@ -28,6 +31,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException ex,
                                                                HttpServletRequest request) {
+        log.warn("EntityNotFoundException at {}: {}", request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(
                 HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI()
         ));
@@ -36,6 +40,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex,
                                                                  HttpServletRequest request) {
+        log.warn("Validation failed at {}: {}", request.getRequestURI(), ex.getMessage());
         List<Map<String, String>> violations = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> Map.of(
                         "field", fe.getField(),
@@ -57,6 +62,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(IllegalArgumentException ex,
                                                                   HttpServletRequest request) {
+        log.warn("IllegalArgumentException at {}: {}", request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(
                 HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI()
         ));
@@ -65,6 +71,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex,
                                                               HttpServletRequest request) {
+        log.error("RuntimeException at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         String message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
         
@@ -80,8 +88,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex,
                                                               HttpServletRequest request) {
+        log.error("Unhandled Exception at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody(
-                HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request.getRequestURI()
+                HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred: " + ex.getClass().getSimpleName(), request.getRequestURI()
         ));
     }
 

@@ -2,7 +2,7 @@ package com.example.tripplanner.application.usecase;
 
 import com.example.tripplanner.application.dto.RateRequest;
 import com.example.tripplanner.application.dto.SharedContentResponse;
-import com.example.tripplanner.application.mapper.TripMapper;
+import com.example.tripplanner.application.mapper.SharedContentMapper;
 import com.example.tripplanner.domain.model.SharedContent;
 import com.example.tripplanner.domain.model.UserVote;
 import com.example.tripplanner.domain.port.SharedContentRepository;
@@ -26,11 +26,29 @@ public class RateContentUseCase {
         SharedContent content = sharedContentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Shared content not found"));
 
-        if (request.getStars() < 1 || request.getStars() > 5) {
-            throw new RuntimeException("Stars must be between 1 and 5");
+        if (request.getStars() < 0 || request.getStars() > 5) {
+            throw new RuntimeException("Stars must be between 0 and 5");
         }
 
         Optional<UserVote> existingVoteOpt = userVoteRepository.findByUserIdAndSharedContentId(userId, contentId);
+
+        if (request.getStars() == 0) {
+            if (existingVoteOpt.isPresent()) {
+                UserVote existingVote = existingVoteOpt.get();
+                content.setTotalRatingSum(content.getTotalRatingSum() - existingVote.getStars());
+                content.setTotalVotes(content.getTotalVotes() - 1);
+                userVoteRepository.delete(existingVote);
+                
+                if (content.getTotalVotes() > 0) {
+                    content.setRating(content.getTotalRatingSum() / content.getTotalVotes());
+                } else {
+                    content.setRating(0.0);
+                }
+                SharedContent saved = sharedContentRepository.save(content);
+                return SharedContentMapper.toResponse(saved);
+            }
+            return SharedContentMapper.toResponse(content);
+        }
 
         if (existingVoteOpt.isPresent()) {
             UserVote existingVote = existingVoteOpt.get();
@@ -59,21 +77,6 @@ public class RateContentUseCase {
 
         SharedContent saved = sharedContentRepository.save(content);
 
-        return SharedContentResponse.builder()
-                .id(saved.getId())
-                .user(TripMapper.toUserResponse(saved.getUser()))
-                .type(saved.getType())
-                .refId(saved.getRefId())
-                .content(saved.getContent())
-                .rating(saved.getRating())
-                .totalRatingSum(saved.getTotalRatingSum())
-                .totalVotes(saved.getTotalVotes())
-                .description(saved.getDescription())
-                .cost(saved.getCost())
-                .duration(saved.getDuration())
-                .imageUrl(saved.getImageUrl())
-                .status(saved.getStatus())
-                .createdAt(saved.getCreatedAt())
-                .build();
+        return SharedContentMapper.toResponse(saved);
     }
 }

@@ -1,8 +1,11 @@
-package com.example.tripplanner.infrastructure.persistence;
+package com.example.tripplanner.infrastructure.persistence.impl;
 
 import com.example.tripplanner.domain.model.AiLog;
 import com.example.tripplanner.domain.model.AiLogStatus;
 import com.example.tripplanner.domain.port.AiLogRepository;
+import com.example.tripplanner.infrastructure.persistence.AiLogEntity;
+import com.example.tripplanner.infrastructure.persistence.JpaAiLogRepository;
+import com.example.tripplanner.infrastructure.persistence.PersistenceMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -51,8 +51,11 @@ public class SharedContentEntity {
     @Builder.Default
     private Integer totalVotes = 0; // Number of upvotes from community
     
+    @ElementCollection
+    @CollectionTable(name = "shared_content_images", joinColumns = @JoinColumn(name = "shared_content_id"))
     @Column(name = "image_url")
-    private String imageUrl;
+    @Builder.Default
+    private java.util.List<String> imageUrls = new java.util.ArrayList<>();
     
     @Column(columnDefinition = "TEXT")
     private String description;
