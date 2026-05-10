@@ -56,7 +56,19 @@ public class SharedContentRepositoryImpl implements SharedContentRepository {
 
     @Override
     public List<SharedContent> findAllPending() {
-        return jpaRepository.findByStatusOrderByCreatedAtDesc(com.example.tripplanner.domain.model.ShareStatus.PENDING).stream()
+        return findByStatus(com.example.tripplanner.domain.model.ShareStatus.PENDING);
+    }
+
+    @Override
+    public List<SharedContent> findByStatus(com.example.tripplanner.domain.model.ShareStatus status) {
+        return jpaRepository.findByStatusOrderByCreatedAtDesc(status).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SharedContent> findByUserId(UUID userId) {
+        return jpaRepository.findByUser_Id(userId).stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }

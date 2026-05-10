@@ -25,6 +25,10 @@ public class CreateTripUseCase {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + request.getUserId()));
 
+        if (user.getStatus() != com.example.tripplanner.domain.model.UserStatus.ACTIVE) {
+            throw new IllegalStateException("Tài khoản đang bị khóa hoặc đã bị xóa, không thể tạo chuyến đi mới.");
+        }
+
         java.time.LocalDate now = java.time.LocalDate.now();
         if (request.getStartDate().isBefore(now)) {
             throw new IllegalArgumentException("Ngày khởi hành không được ở trong quá khứ");

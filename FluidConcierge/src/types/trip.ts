@@ -120,31 +120,6 @@ export interface ActivityUpdateRequest {
 
 // --- Community Sharing Types ---
 
-export interface UserResponse {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-}
-
-export interface SharedContentResponse {
-  id: string;
-  user: UserResponse;
-  type: 'ACTIVITY' | 'TRIP' | 'EXPLORE_ITEM' | 'STANDALONE_ACTIVITY';
-  refId: string;
-  content: string; // JSON string
-  rating: number;
-  totalRatingSum: number;
-  totalVotes: number;
-  hasUpvoted?: boolean;
-  imageUrls?: string[];
-  description?: string;
-  cost?: number;
-  duration?: number;
-  status: string;
-  createdAt: string;
-  referenceData?: any; // ActivityResponse | TripResponse
-}
 
 export interface ShareContentRequest {
   type: 'ACTIVITY' | 'TRIP' | 'EXPLORE_ITEM' | 'STANDALONE_ACTIVITY';
@@ -186,4 +161,42 @@ export interface ExploreItem {
   description?: string;
   averageRating: number;
   reviewCount: number;
+}
+
+// --- Community Sharing Types ---
+
+export interface UserResponse {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
+export interface SharedContentResponse {
+  id: string;
+  user: UserResponse;
+  type: 'ACTIVITY' | 'TRIP' | 'EXPLORE_ITEM' | 'STANDALONE_ACTIVITY';
+  refId: string;
+  content: string; // JSON string
+  rating: number;
+  totalRatingSum: number;
+  totalVotes: number;
+  hasUpvoted?: boolean;
+  imageUrls?: string[];
+  description?: string;
+  cost?: number;
+  duration?: number;
+  status: string;
+  createdAt: string;
+  referenceData?: any; // ActivityResponse | TripResponse
+}
+
+export interface AdminUserResponse {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  status: 'ACTIVE' | 'LOCKED' | 'DELETED';
+  createdAt: string;
+  lastActiveAt: string | null;
 }

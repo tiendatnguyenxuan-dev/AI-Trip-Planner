@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-// @Component
+@Component
 @RequiredArgsConstructor
 @Slf4j
 @Order(2)

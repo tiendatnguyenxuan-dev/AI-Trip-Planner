@@ -14,5 +14,7 @@ public interface ExploreRepository {
     Page<ExploreItem> findAll(String destination, BigDecimal minBudget, BigDecimal maxBudget, Integer durationDays, List<String> tags, Pageable pageable);
     List<ExploreItem> findTrending();
     List<ExploreItem> findByTags(List<String> tags);
+    List<ExploreItem> findAll();
+    void deleteById(UUID id);
     long count();
 }

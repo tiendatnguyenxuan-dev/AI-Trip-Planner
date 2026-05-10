@@ -1,4 +1,38 @@
+import { useState, useEffect } from 'react';
+import { adminApi } from '../../services/api';
+import type { ExploreItem } from '../../types/trip';
+
 export default function Places() {
+  const [places, setPlaces] = useState<ExploreItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPlaces();
+  }, []);
+
+  const fetchPlaces = async () => {
+    try {
+      setLoading(true);
+      const data = await adminApi.getPlaces();
+      setPlaces(data);
+    } catch (error: any) {
+      console.error('Failed to fetch places:', error);
+      if (error.response?.status === 403) {
+        alert('Access Denied: You must be logged in as an Admin.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryClass = (type: string) => {
+    switch (type) {
+      case 'EXPERIENCE': return 'bg-tertiary-fixed text-on-tertiary-fixed';
+      case 'PLACE': return 'bg-primary-fixed text-on-primary-fixed';
+      default: return 'bg-secondary-fixed text-on-secondary-fixed';
+    }
+  };
+
   return (
     <div className="p-10 space-y-12">
       <section className="relative overflow-hidden rounded-xl p-12 bg-surface-container-low min-h-[300px] flex items-center">
@@ -34,38 +68,39 @@ export default function Places() {
                 <tr className="bg-surface-container-low/50 border-b border-outline-variant/10">
                   <th className="px-6 py-4 font-label text-[10px] uppercase tracking-wider text-on-surface-variant">Place Name</th>
                   <th className="px-6 py-4 font-label text-[10px] uppercase tracking-wider text-on-surface-variant">Category</th>
-                  <th className="px-6 py-4 font-label text-[10px] uppercase tracking-wider text-on-surface-variant">Cost</th>
+                  <th className="px-6 py-4 font-label text-[10px] uppercase tracking-wider text-on-surface-variant">Budget</th>
                   <th className="px-6 py-4 font-label text-[10px] uppercase tracking-wider text-on-surface-variant">Location</th>
                   <th className="px-6 py-4 font-label text-[10px] uppercase tracking-wider text-on-surface-variant text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/5">
-                {[
-                  { name: "L'Avant-Garde", type: 'Contemporary French Cuisine', category: 'Food', catClass: 'bg-tertiary-fixed text-on-tertiary-fixed', cost: '$$$', location: 'Paris, France', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCiv8KH3vN5YFwz_7Sj_ZgIgSehUbFWRDc3sCsQm7yhoUhrByuRxnfOI3fWYVniHOg4mEue5MdGsKVePQUpjNrUiNUfQQPr9dKDQPuC-83PuV6virFh-lUAm4bHhtdhnOqaM5SK76YMKG2Jo-uGPbvJDOG9Mns_fNvAslgN6M0iXDhNR9VBfiBsdfgHjtVwlVhH8plXPjIsjjeleAYFwzDdulQCdr6_SxyFWrlMw40Pj4kHmv6B3ngdCslS-45TjJ3FXgpJd0SWVUI' },
-                  { name: 'The Eternal Forum', type: 'Ancient Landmark Tour', category: 'Sightseeing', catClass: 'bg-primary-fixed text-on-primary-fixed', cost: '$$', location: 'Rome, Italy', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAPoPrMwzk-1G4buvcS7eXHxYGwFn7lnYd8uCTBzzFhozOTHJomsu3Ku9wCAjEACUe66f5Fsg3VgA7TqdVxlQkQAp4rdE6-kBxWlm4bUHhFkRRU5LtAprtkDk881519BfjU6-TfyqQeV_hcw-YLDpe61u0JhGVFPVNXphyIKwZWj2fWBXgsdvjHc9DT7cD_2jd--ApgtpBqiNgtzyG5t62R05OOLjjLD95NR57_rL6pewXsydzO4GRFqLTLTcwvNuhSKoCsxLEETLE' },
-                  { name: 'Velocity Elite', type: 'Private Chauffeur Service', category: 'Transport', catClass: 'bg-secondary-fixed text-on-secondary-fixed', cost: '$$$$', location: 'London, UK', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAnXjiASaZIdawozTsEb6EGEoRnsLhzrdiBwC-6JQ518IAre-qv9OTup9jZFzZiiioGCct3JDV3zzE28hqI7KuliXgdOy3jI1TLUACpPU2lC_-aWGn_-8pZDo7ecyfesGGnV6g-75BCOV3mFI2xwgxqoacWPfj1FjOtVfCEZ7v-xbH-yTuyYD-NsfA9s4ePju7eMc-J_buTM20VGN_mBlkcY5D9n_XpR3tggVyB0FJpmNRT90Sz1WmbOiQfhGYhV-OyhFR9QD_hwxI' },
-                ].map((place, i) => (
-                  <tr key={i} className="hover:bg-surface-container-low transition-colors group">
+                {loading ? (
+                  <tr><td colSpan={5} className="px-6 py-10 text-center text-on-surface-variant">Loading destinations...</td></tr>
+                ) : places.length === 0 ? (
+                  <tr><td colSpan={5} className="px-6 py-10 text-center text-on-surface-variant">No destinations found.</td></tr>
+                ) : places.map((place) => (
+                  <tr key={place.id} className="hover:bg-surface-container-low transition-colors group">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
-                          <img src={place.img} alt={place.name} className="w-full h-full object-cover" />
+                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-highest">
+                          {place.thumbnailUrl && <img src={place.thumbnailUrl} alt={place.title} className="w-full h-full object-cover" />}
                         </div>
                         <div>
-                          <p className="font-semibold text-white">{place.name}</p>
-                          <p className="text-xs text-on-surface-variant">{place.type}</p>
+                          <p className="font-semibold text-white">{place.title}</p>
+                          <p className="text-xs text-on-surface-variant line-clamp-1">{place.description}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <span className={`${place.catClass} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider`}>{place.category}</span>
+                      <span className={`${getCategoryClass(place.type)} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider`}>{place.type}</span>
                     </td>
                     <td className="px-6 py-5">
-                      <div className="flex gap-0.5">
-                        <span className="text-primary">{place.cost}</span>
+                      <div className="flex flex-col">
+                        <span className="text-primary text-xs font-bold">${place.minBudget.toLocaleString()}</span>
+                        <span className="text-on-surface-variant text-[10px]">Min. Budget</span>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-sm text-on-surface-variant">{place.location}</td>
+                    <td className="px-6 py-5 text-sm text-on-surface-variant">{place.destination}</td>
                     <td className="px-6 py-5 text-right">
                       <button className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-white transition-all"><span className="material-symbols-outlined">more_vert</span></button>
                     </td>
@@ -74,7 +109,7 @@ export default function Places() {
               </tbody>
             </table>
             <div className="p-6 border-t border-outline-variant/10 flex justify-between items-center">
-              <span className="text-sm text-on-surface-variant">Showing 1-3 of 42 places</span>
+              <span className="text-sm text-on-surface-variant">Showing {places.length} destinations</span>
               <div className="flex gap-2">
                 <button className="px-4 py-2 rounded-lg border border-outline-variant text-sm hover:bg-surface-container-high transition-colors">Previous</button>
                 <button className="px-4 py-2 rounded-lg border border-outline-variant text-sm hover:bg-surface-container-high transition-colors">Next</button>

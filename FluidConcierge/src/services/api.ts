@@ -12,10 +12,12 @@ import type {
   ActivityUpdateRequest,
   ShareContentRequest,
   SharedContentResponse,
+  UserResponse,
   CommentRequest,
   CommentResponse,
   RateRequest,
   ExploreItem,
+  AdminUserResponse,
 } from '../types/trip';
 
 // Base API client pointing at Spring Boot backend
@@ -132,12 +134,10 @@ export const exploreApi = {
 
 export const communityApi = {
   shareContentFormData: (formData: FormData): Promise<SharedContentResponse> => {
-    // Strictly NO Content-Type header here to let browser define boundary
     return apiClient.post('/community/share', formData).then(r => r.data);
   },
 
   shareContent: (request: ShareContentRequest, images?: File[]): Promise<SharedContentResponse> => {
-    // Keep this for backward compatibility if needed, but use the new logic internally
     const formData = new FormData();
     formData.append('type', request.type);
     if (request.refId) formData.append('refId', request.refId);
@@ -167,21 +167,50 @@ export const communityApi = {
 
   getExploreItemReviews: (id: string): Promise<SharedContentResponse[]> =>
     apiClient.get(`/community/explore/${id}/reviews`).then(r => r.data),
-
-  // Admin endpoints
-  getAdminPending: (): Promise<SharedContentResponse[]> =>
-    apiClient.get('/community/admin/pending').then(r => r.data),
-
-  approveContent: (id: string): Promise<SharedContentResponse> =>
-    apiClient.post(`/community/admin/${id}/approve`).then(r => r.data),
-
-  rejectContent: (id: string): Promise<void> =>
-    apiClient.post(`/community/admin/${id}/reject`).then(r => r.data),
-
-  getAdminStats: (): Promise<{ pendingCount: number; approvedCount: number; rejectedCount: number }> =>
-    apiClient.get('/community/admin/stats').then(r => r.data),
-
-  getTopContributors: (limit: number = 5): Promise<any[]> =>
-    apiClient.get(`/community/admin/contributors`, { params: { limit } }).then(r => r.data),
 };
 
+export const adminApi = {
+  getUsers: (): Promise<AdminUserResponse[]> =>
+    apiClient.get('/admin/users').then(r => r.data),
+
+  lockUser: (id: string): Promise<AdminUserResponse> =>
+    apiClient.patch(`/admin/users/${id}/status`, JSON.stringify('LOCKED'), {
+      headers: { 'Content-Type': 'application/json' }
+    }).then(r => r.data),
+
+  unlockUser: (id: string): Promise<AdminUserResponse> =>
+    apiClient.patch(`/admin/users/${id}/status`, JSON.stringify('ACTIVE'), {
+      headers: { 'Content-Type': 'application/json' }
+    }).then(r => r.data),
+
+  deleteUser: (id: string): Promise<void> =>
+    apiClient.delete(`/admin/users/${id}`).then(r => r.data),
+
+  getUserReviews: (id: string): Promise<SharedContentResponse[]> =>
+    apiClient.get(`/admin/users/${id}/reviews`).then(r => r.data),
+
+  getPendingContent: (): Promise<SharedContentResponse[]> =>
+    apiClient.get('/admin/community/pending').then(r => r.data),
+
+  approveContent: (id: string): Promise<SharedContentResponse> =>
+    apiClient.post(`/admin/community/${id}/approve`).then(r => r.data),
+
+  rejectContent: (id: string): Promise<void> =>
+    apiClient.post(`/admin/community/${id}/reject`).then(r => r.data),
+
+  getStats: (): Promise<{ pendingCount: number; approvedCount: number; rejectedCount: number }> =>
+    apiClient.get('/admin/community/stats').then(r => r.data),
+
+  getTopContributors: (limit: number = 5): Promise<any[]> =>
+    apiClient.get(`/admin/community/contributors`, { params: { limit } }).then(r => r.data),
+
+  // Places (Explore Items) Management
+  getPlaces: (): Promise<ExploreItem[]> =>
+    apiClient.get('/admin/places').then(r => r.data),
+
+  updatePlace: (id: string, body: Partial<ExploreItem>): Promise<ExploreItem> =>
+    apiClient.put(`/admin/places/${id}`, body).then(r => r.data),
+
+  deletePlace: (id: string): Promise<void> =>
+    apiClient.delete(`/admin/places/${id}`).then(r => r.data),
+};

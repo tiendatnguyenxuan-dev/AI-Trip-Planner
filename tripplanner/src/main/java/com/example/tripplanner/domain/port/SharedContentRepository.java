@@ -14,5 +14,7 @@ public interface SharedContentRepository {
     boolean existsByUser_IdAndRefIdAndType(UUID userId, UUID refId, ShareType type);
     List<SharedContent> findByRefId(UUID refId);
     List<SharedContent> findAllPending();
+    List<SharedContent> findByStatus(com.example.tripplanner.domain.model.ShareStatus status);
+    List<SharedContent> findByUserId(UUID userId);
     void deleteById(UUID id);
 }

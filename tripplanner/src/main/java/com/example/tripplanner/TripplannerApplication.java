@@ -1,3 +1,4 @@
+
 package com.example.tripplanner;
 
 import org.springframework.boot.SpringApplication;

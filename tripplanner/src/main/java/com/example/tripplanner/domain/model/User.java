@@ -15,5 +15,8 @@ public class User {
     private String password;
     private String name;
     private Role role;
+    @Builder.Default
+    private com.example.tripplanner.domain.model.UserStatus status = com.example.tripplanner.domain.model.UserStatus.ACTIVE;
     private LocalDateTime createdAt;
+    private LocalDateTime lastActiveAt;
 }

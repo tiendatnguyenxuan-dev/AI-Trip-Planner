@@ -10,4 +10,6 @@ public interface UserRepository {
     boolean existsById(UUID id);
     boolean existsByEmail(String email);
     User save(User user);
+    java.util.List<User> findAll();
+    void deleteById(UUID id);
 }

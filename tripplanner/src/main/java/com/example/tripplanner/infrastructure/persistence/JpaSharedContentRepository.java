@@ -21,6 +21,7 @@ public interface JpaSharedContentRepository extends JpaRepository<SharedContentE
     List<SharedContentEntity> findByStatusOrderByCreatedAtDesc(com.example.tripplanner.domain.model.ShareStatus status);
 
     List<SharedContentEntity> findByUser(UserEntity user);
+    List<SharedContentEntity> findByUser_Id(UUID userId);
 
     long countByStatus(com.example.tripplanner.domain.model.ShareStatus status);
 

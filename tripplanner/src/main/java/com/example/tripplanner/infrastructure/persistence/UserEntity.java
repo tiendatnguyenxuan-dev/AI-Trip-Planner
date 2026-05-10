@@ -33,7 +33,15 @@ public class UserEntity {
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private com.example.tripplanner.domain.model.UserStatus status = com.example.tripplanner.domain.model.UserStatus.ACTIVE;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
 }

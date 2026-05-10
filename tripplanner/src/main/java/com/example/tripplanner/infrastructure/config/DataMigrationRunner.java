@@ -1,5 +1,8 @@
 package com.example.tripplanner.infrastructure.config;
 
+import com.example.tripplanner.domain.model.Role;
+import com.example.tripplanner.domain.model.UserStatus;
+import com.example.tripplanner.application.port.PasswordEncoder;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -14,6 +17,7 @@ import org.springframework.core.annotation.Order;
 public class DataMigrationRunner implements CommandLineRunner {
 
     private final JdbcTemplate jdbcTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
@@ -45,6 +49,28 @@ public class DataMigrationRunner implements CommandLineRunner {
             log.warn("Could not create shared_content_images table (may already exist or Hibernate will handle it): {}", e.getMessage());
         }
 
-        
+
+        // 4. Ensure some default users exist if table is empty
+        Integer userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Integer.class);
+        if (userCount != null && userCount == 0) {
+            log.info("Database is empty. Seeding default users...");
+            
+            String adminId = java.util.UUID.randomUUID().toString();
+            String userId = "11111111-1111-1111-1111-111111111111"; // TEST_USER_ID from frontend
+            
+            String encodedPassword = passwordEncoder.encode("123123");
+            
+            jdbcTemplate.update(
+                "INSERT INTO users (id, email, password, name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+                adminId, "admin@gmail.com", encodedPassword, "System Admin", "ADMIN", "ACTIVE"
+            );
+            
+            jdbcTemplate.update(
+                "INSERT INTO users (id, email, password, name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+                userId, "user@gmail.com", encodedPassword, "Test User", "USER", "ACTIVE"
+            );
+            
+            log.info("Seeded Admin (admin@gmail.com) and Test User (user@gmail.com). Password: 123123");
+        }
     }
 }

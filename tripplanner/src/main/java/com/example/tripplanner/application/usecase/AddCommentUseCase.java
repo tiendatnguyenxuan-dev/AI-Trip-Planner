@@ -29,6 +29,10 @@ public class AddCommentUseCase {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (user.getStatus() != com.example.tripplanner.domain.model.UserStatus.ACTIVE) {
+            throw new IllegalStateException("Tài khoản đang bị khóa, không thể bình luận.");
+        }
+
         SharedContent content = sharedContentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Shared content not found"));
 

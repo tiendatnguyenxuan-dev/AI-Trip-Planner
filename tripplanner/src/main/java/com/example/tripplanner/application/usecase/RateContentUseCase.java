@@ -6,6 +6,7 @@ import com.example.tripplanner.application.mapper.SharedContentMapper;
 import com.example.tripplanner.domain.model.SharedContent;
 import com.example.tripplanner.domain.model.UserVote;
 import com.example.tripplanner.domain.port.SharedContentRepository;
+import com.example.tripplanner.domain.port.UserRepository;
 import com.example.tripplanner.domain.port.UserVoteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,9 +21,17 @@ public class RateContentUseCase {
 
     private final SharedContentRepository sharedContentRepository;
     private final UserVoteRepository userVoteRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public SharedContentResponse execute(UUID userId, UUID contentId, RateRequest request) {
+        com.example.tripplanner.domain.model.User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getStatus() != com.example.tripplanner.domain.model.UserStatus.ACTIVE) {
+            throw new IllegalStateException("Tài khoản đang bị khóa, không thể đánh giá.");
+        }
+
         SharedContent content = sharedContentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Shared content not found"));
 

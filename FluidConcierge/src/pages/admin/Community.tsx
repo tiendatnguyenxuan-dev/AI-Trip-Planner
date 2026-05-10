@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { communityApi } from '../../services/api';
+import { communityApi, adminApi } from '../../services/api';
 import type { SharedContentResponse } from '../../types/trip';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,7 +21,7 @@ export default function Community() {
 
   const fetchContributors = async () => {
     try {
-      const data = await communityApi.getTopContributors(3);
+      const data = await adminApi.getTopContributors(3);
       setTopContributors(data);
     } catch (error) {
       console.error('Failed to fetch contributors:', error);
@@ -44,7 +44,7 @@ export default function Community() {
   const fetchPending = async () => {
     try {
       setLoading(true);
-      const data = await communityApi.getAdminPending();
+      const data = await adminApi.getPendingContent();
       setPendingItems(data);
     } catch (error) {
       console.error('Failed to fetch pending content:', error);
@@ -55,7 +55,7 @@ export default function Community() {
 
   const handleApprove = async (id: string) => {
     try {
-      await communityApi.approveContent(id);
+      await adminApi.approveContent(id);
       setPendingItems(prev => prev.filter(item => item.id !== id));
       setArchivedCount(prev => prev + 1);
     } catch (error) {
@@ -66,7 +66,7 @@ export default function Community() {
   const handleReject = async (id: string) => {
     if (!window.confirm('Bạn có chắc chắn muốn từ chối bài viết này?')) return;
     try {
-      await communityApi.rejectContent(id);
+      await adminApi.rejectContent(id);
       setPendingItems(prev => prev.filter(item => item.id !== id));
       setArchivedCount(prev => prev + 1);
     } catch (error) {

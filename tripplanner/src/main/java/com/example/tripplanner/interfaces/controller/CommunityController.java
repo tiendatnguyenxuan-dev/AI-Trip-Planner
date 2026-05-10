@@ -23,11 +23,7 @@ public class CommunityController {
     private final GetTrendingContentUseCase getTrendingContentUseCase;
     private final AddCommentUseCase addCommentUseCase;
     private final GetCommentsUseCase getCommentsUseCase;
-    private final GetPendingContentUseCase getPendingContentUseCase;
-    private final ModerateContentUseCase moderateContentUseCase;
     private final GetExploreItemReviewsUseCase getExploreItemReviewsUseCase;
-    private final GetModerationStatsUseCase getModerationStatsUseCase;
-    private final GetTopContributorsUseCase getTopContributorsUseCase;
 
     @PostMapping(value = "/share", consumes = {"multipart/form-data"})
     public ResponseEntity<SharedContentResponse> shareContent(
@@ -93,33 +89,5 @@ public class CommunityController {
     @GetMapping("/explore/{id}/reviews")
     public ResponseEntity<List<SharedContentResponse>> getExploreItemReviews(@PathVariable UUID id) {
         return ResponseEntity.ok(getExploreItemReviewsUseCase.execute(id));
-    }
-
-    // --- Admin Endpoints ---
-
-    @GetMapping("/admin/pending")
-    public ResponseEntity<List<SharedContentResponse>> getPending() {
-        return ResponseEntity.ok(getPendingContentUseCase.execute());
-    }
-
-    @PostMapping("/admin/{id}/approve")
-    public ResponseEntity<SharedContentResponse> approve(@PathVariable UUID id) {
-        return ResponseEntity.ok(moderateContentUseCase.execute(id, com.example.tripplanner.domain.model.ShareStatus.PUBLISHED));
-    }
-
-    @PostMapping("/admin/{id}/reject")
-    public ResponseEntity<Void> reject(@PathVariable UUID id) {
-        moderateContentUseCase.execute(id, com.example.tripplanner.domain.model.ShareStatus.REJECTED);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/admin/stats")
-    public ResponseEntity<ModerationStatsResponse> getStats() {
-        return ResponseEntity.ok(getModerationStatsUseCase.execute());
-    }
-
-    @GetMapping("/admin/contributors")
-    public ResponseEntity<List<ContributorResponse>> getTopContributors(@RequestParam(defaultValue = "5") int limit) {
-        return ResponseEntity.ok(getTopContributorsUseCase.execute(limit));
     }
 }

@@ -46,4 +46,16 @@ public class UserRepositoryImpl implements UserRepository {
     public boolean existsById(UUID id) {
         return jpaUserRepository.existsById(id);
     }
+
+    @Override
+    public java.util.List<User> findAll() {
+        return jpaUserRepository.findAll().stream()
+                .map(mapper::toDomain)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        jpaUserRepository.deleteById(id);
+    }
 }

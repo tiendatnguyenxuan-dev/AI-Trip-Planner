@@ -34,7 +34,8 @@ public class ExploreRepositoryImpl implements ExploreRepository {
     }
 
     @Override
-    public Page<ExploreItem> findAll(String destination, BigDecimal minBudget, BigDecimal maxBudget, Integer durationDays, List<String> tags, Pageable pageable) {
+    public Page<ExploreItem> findAll(String destination, BigDecimal minBudget, BigDecimal maxBudget,
+            Integer durationDays, List<String> tags, Pageable pageable) {
         return jpaExploreItemRepository.findWithFilters(destination, minBudget, maxBudget, durationDays, tags, pageable)
                 .map(mapper::toExploreItem);
     }
@@ -51,6 +52,18 @@ public class ExploreRepositoryImpl implements ExploreRepository {
         return jpaExploreItemRepository.findByTagsIn(tags).stream()
                 .map(mapper::toExploreItem)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ExploreItem> findAll() {
+        return jpaExploreItemRepository.findAll().stream()
+                .map(mapper::toExploreItem)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        jpaExploreItemRepository.deleteById(id);
     }
 
     @Override

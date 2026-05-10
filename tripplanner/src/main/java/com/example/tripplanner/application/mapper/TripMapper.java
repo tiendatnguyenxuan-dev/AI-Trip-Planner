@@ -25,6 +25,9 @@ public final class TripMapper {
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole().name())
+                .status(user.getStatus() != null ? user.getStatus().name() : null)
+                .createdAt(user.getCreatedAt())
+                .lastActiveAt(user.getLastActiveAt())
                 .build();
     }
 
