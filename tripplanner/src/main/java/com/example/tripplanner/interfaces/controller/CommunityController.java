@@ -1,7 +1,13 @@
 package com.example.tripplanner.interfaces.controller;
 
 import com.example.tripplanner.application.dto.*;
-import com.example.tripplanner.application.usecase.*;
+import com.example.tripplanner.application.usecase.trip.*;
+import com.example.tripplanner.application.usecase.activity.*;
+import com.example.tripplanner.application.usecase.itinerary.*;
+import com.example.tripplanner.application.usecase.explore.*;
+import com.example.tripplanner.application.usecase.community.*;
+import com.example.tripplanner.application.usecase.auth.*;
+import com.example.tripplanner.application.usecase.ai.*;
 import com.example.tripplanner.domain.model.ShareType;
 import com.example.tripplanner.infrastructure.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;

@@ -1,9 +1,9 @@
 package com.example.tripplanner.interfaces.controller;
 
-import com.example.tripplanner.application.usecase.GetExploreItemByIdUseCase;
-import com.example.tripplanner.application.usecase.GetExploreItemsUseCase;
-import com.example.tripplanner.application.usecase.GetRecommendedExploreItemsUseCase;
-import com.example.tripplanner.application.usecase.GetTrendingExploreItemsUseCase;
+import com.example.tripplanner.application.usecase.explore.GetExploreItemByIdUseCase;
+import com.example.tripplanner.application.usecase.explore.GetExploreItemsUseCase;
+import com.example.tripplanner.application.usecase.explore.GetRecommendedExploreItemsUseCase;
+import com.example.tripplanner.application.usecase.explore.GetTrendingExploreItemsUseCase;
 import com.example.tripplanner.domain.model.ExploreItem;
 import com.example.tripplanner.infrastructure.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;

@@ -2,8 +2,8 @@ package com.example.tripplanner.interfaces.controller;
 
 import com.example.tripplanner.application.dto.AiLogDetailResponse;
 import com.example.tripplanner.application.dto.AiLogPageResponse;
-import com.example.tripplanner.application.usecase.GetAiLogDetailUseCase;
-import com.example.tripplanner.application.usecase.GetAiLogsByTripUseCase;
+import com.example.tripplanner.application.usecase.ai.GetAiLogDetailUseCase;
+import com.example.tripplanner.application.usecase.ai.GetAiLogsByTripUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
