@@ -1,7 +1,10 @@
-package com.example.tripplanner.infrastructure.persistence;
+package com.example.tripplanner.infrastructure.persistence.impl;
 
 import com.example.tripplanner.domain.model.User;
 import com.example.tripplanner.domain.port.UserRepository;
+import com.example.tripplanner.infrastructure.persistence.JpaUserRepository;
+import com.example.tripplanner.infrastructure.persistence.PersistenceMapper;
+import com.example.tripplanner.infrastructure.persistence.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

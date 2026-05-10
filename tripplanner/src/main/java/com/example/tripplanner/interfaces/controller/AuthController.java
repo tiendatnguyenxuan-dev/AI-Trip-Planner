@@ -1,4 +1,4 @@
-package com.example.tripplanner.presentation;
+package com.example.tripplanner.interfaces.controller;
 
 import com.example.tripplanner.application.dto.AuthResponse;
 import com.example.tripplanner.application.dto.LoginRequest;

@@ -1,7 +1,10 @@
-package com.example.tripplanner.infrastructure.persistence;
+package com.example.tripplanner.infrastructure.persistence.impl;
 
 import com.example.tripplanner.domain.model.Comment;
 import com.example.tripplanner.domain.port.CommentRepository;
+import com.example.tripplanner.infrastructure.persistence.CommentEntity;
+import com.example.tripplanner.infrastructure.persistence.JpaCommentRepository;
+import com.example.tripplanner.infrastructure.persistence.PersistenceMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

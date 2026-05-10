@@ -7,7 +7,12 @@ spring:
     url: jdbc:mysql://localhost:3306/trip?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     driverClassName: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:123123}
+    password: ${MYSQL_PASSWORD:1234}
+  
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
   
   jpa: 
     database-platform: org.hibernate.dialect.MySQLDialect

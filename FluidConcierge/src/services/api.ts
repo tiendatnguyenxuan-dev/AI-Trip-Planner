@@ -21,9 +21,6 @@ import type {
 // Base API client pointing at Spring Boot backend
 const apiClient = axios.create({
   baseURL: 'http://localhost:8081/api/v1',
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Add interceptor to include JWT token in requests
@@ -134,11 +131,24 @@ export const exploreApi = {
 // ── Community endpoints ────────────────────────────────────────────────────────
 
 export const communityApi = {
-  shareContent: (request: ShareContentRequest, image?: File): Promise<SharedContentResponse> => {
+  shareContentFormData: (formData: FormData): Promise<SharedContentResponse> => {
+    // Strictly NO Content-Type header here to let browser define boundary
+    return apiClient.post('/community/share', formData).then(r => r.data);
+  },
+
+  shareContent: (request: ShareContentRequest, images?: File[]): Promise<SharedContentResponse> => {
+    // Keep this for backward compatibility if needed, but use the new logic internally
     const formData = new FormData();
-    formData.append('request', new Blob([JSON.stringify(request)], { type: 'application/json' }));
-    if (image) {
-      formData.append('image', image);
+    formData.append('type', request.type);
+    formData.append('refId', request.refId);
+    formData.append('content', request.content);
+    if (request.rating) formData.append('rating', request.rating.toString());
+    if (request.description) formData.append('description', request.description);
+    
+    if (images && images.length > 0) {
+      images.forEach(image => {
+        formData.append('images', image);
+      });
     }
     return apiClient.post('/community/share', formData).then(r => r.data);
   },

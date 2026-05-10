@@ -1,6 +1,7 @@
 package com.example.tripplanner.application.usecase;
 
 import com.example.tripplanner.application.dto.SharedContentResponse;
+import com.example.tripplanner.application.mapper.SharedContentMapper;
 import com.example.tripplanner.application.mapper.TripMapper;
 import com.example.tripplanner.domain.model.ShareType;
 import com.example.tripplanner.domain.model.SharedContent;
@@ -30,17 +31,7 @@ public class GetTrendingContentUseCase {
     }
 
     private SharedContentResponse buildResponse(SharedContent content) {
-        SharedContentResponse response = SharedContentResponse.builder()
-                .id(content.getId())
-                .user(TripMapper.toUserResponse(content.getUser()))
-                .type(content.getType())
-                .refId(content.getRefId())
-                .content(content.getContent())
-                .rating(content.getRating())
-                .totalVotes(content.getTotalVotes())
-                .status(content.getStatus())
-                .createdAt(content.getCreatedAt())
-                .build();
+        SharedContentResponse response = SharedContentMapper.toResponse(content);
 
         // Enrich with reference data
         if (content.getType() == ShareType.ACTIVITY) {

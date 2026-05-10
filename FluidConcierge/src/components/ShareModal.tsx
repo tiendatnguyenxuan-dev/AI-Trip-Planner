@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { communityApi } from '../services/api';
+import { useShareExperience } from '../hooks/useShareExperience';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -21,55 +22,26 @@ const ShareModal: React.FC<ShareModalProps> = ({
   subtitle,
   onSuccess
 }) => {
-  const [rating, setRating] = useState<number>(5);
-  const [description, setDescription] = useState('');
-  const [tip, setTip] = useState('');
-  const [specificLocation, setSpecificLocation] = useState('');
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    rating,
+    setRating,
+    description,
+    setDescription,
+    tip,
+    setTip,
+    specificLocation,
+    setSpecificLocation,
+    loading,
+    images,
+    previews,
+    handleImageChange,
+    removeImage,
+    submitShare
+  } = useShareExperience({ type, refId, onSuccess, onClose });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      let contentObj;
-      if (type === 'ACTIVITY') {
-        contentObj = { description, tip };
-      } else if (type === 'EXPLORE_ITEM') {
-        contentObj = { description, tip, specificLocation }; // Add specific location
-      } else {
-        contentObj = { description, tip: '' };
-      }
-        
-      await communityApi.shareContent({
-        type,
-        refId,
-        rating,
-        description: description,
-        content: JSON.stringify(contentObj)
-      }, image || undefined);
-      onSuccess();
-      onClose();
-    } catch (error: any) {
-      console.error('Failed to share:', error);
-      const errorMessage = error.response?.data?.message || 'Chia sẻ thất bại, vui lòng thử lại!';
-      alert(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    submitShare();
   };
 
   return (
@@ -104,26 +76,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
               </div>
 
               <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
-                <div>
-                  <label className="block text-sm font-bold text-emerald-900 mb-3">Đánh giá của bạn</label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        className="transition-transform hover:scale-110 active:scale-95 focus:outline-none"
-                      >
-                        <span 
-                          className={`material-symbols-outlined text-4xl ${star <= rating ? 'text-yellow-400' : 'text-slate-200'}`}
-                          style={{ fontVariationSettings: star <= rating ? "'FILL' 1" : "'FILL' 0" }}
-                        >
-                          star
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+
 
                 {type === 'EXPLORE_ITEM' && (
                   <div>
@@ -153,24 +106,27 @@ const ShareModal: React.FC<ShareModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-emerald-900 mb-2">Ảnh (Tùy chọn)</label>
-                  <div className="flex items-center gap-4">
-                    <label className="flex-1 border-2 border-dashed border-emerald-200 rounded-xl p-4 text-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/50 transition-all">
-                      <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                      {imagePreview ? (
-                        <div className="relative aspect-video w-full rounded-lg overflow-hidden">
-                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <span className="text-white font-medium">Đổi ảnh khác</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2 text-emerald-600/70">
-                          <span className="material-symbols-outlined text-3xl">add_photo_alternate</span>
-                          <span className="text-sm font-medium">Nhấn để tải ảnh lên</span>
-                        </div>
-                      )}
-                    </label>
+                  <label className="block text-sm font-bold text-emerald-900 mb-2">Ảnh trải nghiệm (Tối đa 5 ảnh)</label>
+                  <div className="grid grid-cols-3 gap-3 mb-3">
+                    {previews.map((preview, index) => (
+                      <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-emerald-100 shadow-sm group">
+                        <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                      </div>
+                    ))}
+                    {images.length < 5 && (
+                      <label className="aspect-square border-2 border-dashed border-emerald-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/50 transition-all text-emerald-400">
+                        <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
+                        <span className="material-symbols-outlined text-3xl">add_a_photo</span>
+                        <span className="text-[10px] font-bold mt-1">Thêm ảnh</span>
+                      </label>
+                    )}
                   </div>
                 </div>
 

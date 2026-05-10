@@ -25,7 +25,7 @@ public class SharedContent {
     private Integer totalVotes = 0;
     
     // Additional fields for Rich display
-    private String imageUrl;
+    private java.util.List<String> imageUrls;
     private String description;
     private Double cost;
     private Integer duration;

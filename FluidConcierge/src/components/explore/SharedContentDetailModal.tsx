@@ -1,22 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { communityApi } from '../../services/api';
 import type { SharedContentResponse, CommentResponse } from '../../types/trip';
+import ImageCarousel from './ImageCarousel';
+import ImageLightbox from './ImageLightbox';
 
 interface SharedContentDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: SharedContentResponse | null;
+  onUpvote?: (id: string, isLike: boolean) => void;
 }
 
 const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
   isOpen,
   onClose,
-  item
+  item,
+  onUpvote
 }) => {
+  const navigate = useNavigate();
   const [comments, setComments] = useState<CommentResponse[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOpen && item) {
@@ -50,6 +59,8 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
   };
 
   if (!item) return null;
+
+  const images = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls : [];
 
   return (
     <AnimatePresence>
@@ -87,23 +98,42 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
 
               {/* Content body */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {item.imageUrl && (
-                  <img 
-                    src={`http://localhost:8081${item.imageUrl}`} 
-                    alt="Content" 
-                    className="w-full max-h-64 object-cover rounded-xl shadow-sm"
-                  />
-                )}
+                <ImageCarousel 
+                  images={images} 
+                  className="w-full h-80 rounded-2xl shadow-inner border border-emerald-50"
+                  onImageClick={(index) => {
+                    setLightboxImages(images);
+                    setLightboxStartIndex(index);
+                    setIsLightboxOpen(true);
+                  }}
+                />
                 <div className="bg-slate-50 p-4 rounded-xl text-slate-700">
                   <p>"{item.description || JSON.parse(item.content).description}"</p>
                 </div>
-                
+
+                {/* View Details Button */}
+                {item.type === 'TRIP' && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      navigate(`/itinerary/${item.refId}`);
+                    }}
+                    className="w-full py-3 bg-emerald-100/50 hover:bg-emerald-100 text-emerald-800 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-sm">map</span>
+                    Xem chi tiết Lịch trình
+                  </button>
+                )}
+
                 {/* Stats */}
                 <div className="flex gap-4 border-y border-emerald-100 py-3">
-                  <div className="flex items-center gap-1 text-yellow-500 font-bold">
-                    <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    {item.rating.toFixed(1)} <span className="text-slate-400 font-normal text-sm">({item.totalVotes} votes)</span>
-                  </div>
+                  <button 
+                    onClick={() => onUpvote?.(item.id, !item.hasUpvoted)}
+                    className={`flex items-center gap-1 font-bold px-3 py-1.5 rounded-xl transition-colors ${item.hasUpvoted ? 'text-white bg-emerald-500 hover:bg-emerald-600' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'}`}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontVariationSettings: item.hasUpvoted ? "'FILL' 1" : "'FILL' 0" }}>thumb_up</span>
+                    {item.totalVotes} <span className={item.hasUpvoted ? "text-emerald-50 font-normal text-sm" : "text-emerald-600/70 font-normal text-sm"}>lượt thích</span>
+                  </button>
                   <div className="flex items-center gap-1 text-emerald-600 font-bold">
                     <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>comment</span>
                     {comments.length} <span className="text-slate-400 font-normal text-sm">bình luận</span>
@@ -122,7 +152,7 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
                           <span className="font-bold text-sm text-emerald-900">{c.user.name}</span>
                           <span className="text-[10px] text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</span>
                         </div>
-                        <p className="text-sm text-slate-700">{c.content}</p>
+                        <p className="text-sm text-slate-900 dark:text-slate-900">{c.content}</p>
                       </div>
                     </div>
                   ))}
@@ -135,16 +165,16 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
               {/* Add comment form */}
               <div className="p-4 bg-emerald-50/30 border-t border-emerald-100">
                 <form onSubmit={handleAddComment} className="flex gap-2">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Viết bình luận..."
-                    className="flex-1 px-4 py-2 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm"
+                    className="flex-1 px-4 py-2 rounded-xl border border-emerald-200 text-slate-900 dark:text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm"
                   />
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={loading || !newComment.trim()}
                     className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
                   >
@@ -154,6 +184,14 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
               </div>
             </div>
           </motion.div>
+
+          {/* Lightbox rendered at root level to avoid transform/overflow clipping */}
+          <ImageLightbox 
+            images={lightboxImages.length > 0 ? lightboxImages : images}
+            startIndex={lightboxStartIndex}
+            isOpen={isLightboxOpen}
+            onClose={() => setIsLightboxOpen(false)}
+          />
         </>
       )}
     </AnimatePresence>

@@ -1,7 +1,7 @@
 package com.example.tripplanner.application.usecase;
 
 import com.example.tripplanner.application.dto.SharedContentResponse;
-import com.example.tripplanner.application.mapper.TripMapper;
+import com.example.tripplanner.application.mapper.SharedContentMapper;
 import com.example.tripplanner.domain.port.SharedContentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,22 +18,7 @@ public class GetExploreItemReviewsUseCase {
 
     public List<SharedContentResponse> execute(UUID exploreItemId) {
         return sharedContentRepository.findByRefId(exploreItemId).stream()
-                .map(content -> SharedContentResponse.builder()
-                        .id(content.getId())
-                        .user(TripMapper.toUserResponse(content.getUser()))
-                        .type(content.getType())
-                        .refId(content.getRefId())
-                        .content(content.getContent())
-                        .rating(content.getRating())
-                        .totalRatingSum(content.getTotalRatingSum())
-                        .totalVotes(content.getTotalVotes())
-                        .description(content.getDescription())
-                        .cost(content.getCost())
-                        .duration(content.getDuration())
-                        .imageUrl(content.getImageUrl())
-                        .status(content.getStatus())
-                        .createdAt(content.getCreatedAt())
-                        .build())
+                .map(SharedContentMapper::toResponse)
                 .collect(Collectors.toList());
     }
 }

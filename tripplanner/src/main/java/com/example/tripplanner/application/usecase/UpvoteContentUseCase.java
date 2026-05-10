@@ -1,7 +1,7 @@
 package com.example.tripplanner.application.usecase;
 
 import com.example.tripplanner.application.dto.SharedContentResponse;
-import com.example.tripplanner.application.mapper.TripMapper;
+import com.example.tripplanner.application.mapper.SharedContentMapper;
 import com.example.tripplanner.domain.model.SharedContent;
 import com.example.tripplanner.domain.port.SharedContentRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,16 +24,6 @@ public class UpvoteContentUseCase {
         content.setTotalVotes(content.getTotalVotes() + 1);
         SharedContent saved = sharedContentRepository.save(content);
         
-        return SharedContentResponse.builder()
-                .id(saved.getId())
-                .user(TripMapper.toUserResponse(saved.getUser()))
-                .type(saved.getType())
-                .refId(saved.getRefId())
-                .content(saved.getContent())
-                .rating(saved.getRating())
-                .totalVotes(saved.getTotalVotes())
-                .status(saved.getStatus())
-                .createdAt(saved.getCreatedAt())
-                .build();
+        return SharedContentMapper.toResponse(saved);
     }
 }

@@ -4,6 +4,7 @@ import { exploreApi, communityApi } from '../../services/api';
 import type { ExploreItem, SharedContentResponse } from '../../types/trip';
 import CommunityActivityCard from './CommunityActivityCard';
 import ShareModal from '../ShareModal';
+import ImageLightbox from './ImageLightbox';
 
 interface Props {
   isOpen: boolean;
@@ -16,6 +17,9 @@ const ExploreDetailModal: React.FC<Props> = ({ isOpen, onClose, exploreItem, onP
   const [reviews, setReviews] = useState<SharedContentResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOpen && exploreItem) {
@@ -140,7 +144,15 @@ const ExploreDetailModal: React.FC<Props> = ({ isOpen, onClose, exploreItem, onP
                 ) : reviews.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4 pb-4">
                     {reviews.map(review => (
-                      <CommunityActivityCard key={review.id} item={review} />
+                      <CommunityActivityCard 
+                        key={review.id} 
+                        item={review} 
+                        onImageOpen={(images, index) => {
+                          setLightboxImages(images);
+                          setLightboxStartIndex(index);
+                          setIsLightboxOpen(true);
+                        }}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -166,6 +178,13 @@ const ExploreDetailModal: React.FC<Props> = ({ isOpen, onClose, exploreItem, onP
             // Refresh reviews
             communityApi.getExploreItemReviews(exploreItem.id).then(setReviews);
           }}
+        />
+
+        <ImageLightbox 
+          images={lightboxImages}
+          startIndex={lightboxStartIndex}
+          isOpen={isLightboxOpen}
+          onClose={() => setIsLightboxOpen(false)}
         />
       </div>
     </AnimatePresence>

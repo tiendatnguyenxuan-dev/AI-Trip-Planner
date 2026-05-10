@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { tripApi, itineraryApi, activityApi } from '../services/api';
 import type { TripResponse, ItineraryResponse, ActivityResponse } from '../types/trip';
+import { useAuth } from '../context/AuthContext';
 import EditActivityModal from '../components/EditActivityModal';
 import ShareModal from '../components/ShareModal';
 
@@ -28,11 +29,12 @@ function formatDate(dateStr: string): string {
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-function ActivityCard({ activity, onEdit, onDelete, onShare }: {
+function ActivityCard({ activity, onEdit, onDelete, onShare, isOwner }: {
   activity: ActivityResponse;
   onEdit: (activity: ActivityResponse) => void;
   onDelete: (activityId: string) => void;
   onShare: (activity: ActivityResponse) => void;
+  isOwner: boolean;
 }) {
   const style = CATEGORY_STYLES.default;
   return (
@@ -76,26 +78,30 @@ function ActivityCard({ activity, onEdit, onDelete, onShare }: {
         >
           <span className="material-symbols-outlined text-sm">share</span>
         </button>
-        <button
-          onClick={() => onEdit(activity)}
-          className="p-2 bg-primary text-white rounded-lg hover:scale-105 cursor-pointer transition-all shadow-md"
-          title="Chỉnh sửa"
-        >
-          <span className="material-symbols-outlined text-sm">edit</span>
-        </button>
-        <button
-          onClick={() => onDelete(activity.id)}
-          className="p-2 bg-error text-white rounded-lg hover:scale-105 cursor-pointer transition-all shadow-md"
-          title="Xóa"
-        >
-          <span className="material-symbols-outlined text-sm">delete</span>
-        </button>
+        {isOwner && (
+          <>
+            <button
+              onClick={() => onEdit(activity)}
+              className="p-2 bg-primary text-white rounded-lg hover:scale-105 cursor-pointer transition-all shadow-md"
+              title="Chỉnh sửa"
+            >
+              <span className="material-symbols-outlined text-sm">edit</span>
+            </button>
+            <button
+              onClick={() => onDelete(activity.id)}
+              className="p-2 bg-error text-white rounded-lg hover:scale-105 cursor-pointer transition-all shadow-md"
+              title="Xóa"
+            >
+              <span className="material-symbols-outlined text-sm">delete</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-function DaySection({ itinerary, isFirst, onAddActivity, onRegenerateDay, onEditActivity, onDeleteActivity, onShareActivity }: {
+function DaySection({ itinerary, isFirst, onAddActivity, onRegenerateDay, onEditActivity, onDeleteActivity, onShareActivity, isOwner }: {
   itinerary: ItineraryResponse;
   isFirst: boolean;
   onAddActivity: (itineraryId: string) => void;
@@ -103,6 +109,7 @@ function DaySection({ itinerary, isFirst, onAddActivity, onRegenerateDay, onEdit
   onEditActivity: (activity: ActivityResponse) => void;
   onDeleteActivity: (activityId: string, itineraryId: string) => void;
   onShareActivity: (activity: ActivityResponse) => void;
+  isOwner: boolean;
 }) {
   const [expanded, setExpanded] = useState(isFirst);
   const dayTotal = itinerary.activities.reduce((s, a) => s + (a.cost || 0), 0);
@@ -151,27 +158,30 @@ function DaySection({ itinerary, isFirst, onAddActivity, onRegenerateDay, onEdit
                     onEdit={onEditActivity}
                     onDelete={(activityId) => onDeleteActivity(activityId, itinerary.id)}
                     onShare={onShareActivity}
+                    isOwner={isOwner}
                   />
                 ))
             )}
           </div>
 
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => onAddActivity(itinerary.id)}
-              className="flex-1 py-3 border-2 border-dashed border-primary/30 rounded-xl text-primary font-semibold hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined">add</span>
-              Thêm hoạt động
-            </button>
-            <button
-              onClick={() => onRegenerateDay(itinerary.id)}
-              className="px-6 py-3 bg-secondary text-white rounded-xl font-semibold hover:scale-105 transition-all flex items-center gap-2"
-            >
-              <span className="material-symbols-outlined">refresh</span>
-              Tạo lại ngày này
-            </button>
-          </div>
+          {isOwner && (
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => onAddActivity(itinerary.id)}
+                className="flex-1 py-3 border-2 border-dashed border-primary/30 rounded-xl text-primary font-semibold hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined">add</span>
+                Thêm hoạt động
+              </button>
+              <button
+                onClick={() => onRegenerateDay(itinerary.id)}
+                className="px-6 py-3 bg-secondary text-white rounded-xl font-semibold hover:scale-105 transition-all flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined">refresh</span>
+                Tạo lại ngày này
+              </button>
+            </div>
+          )}
         </>
       )}
     </section>
@@ -231,6 +241,7 @@ function GeneratingOverlay() {
 export default function Itinerary() {
   const { id: tripId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [trip, setTrip] = useState<TripResponse | null>(null);
   const [itineraries, setItineraries] = useState<ItineraryResponse[]>([]);
@@ -460,19 +471,21 @@ export default function Itinerary() {
               <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">share</span>
               Chia sẻ
             </button>
-            <button
-              id="btn-regenerate"
-              onClick={handleRegenerate}
-              disabled={isRegenerating}
-              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-emerald-950 font-black rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isRegenerating ? (
-                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-              ) : (
-                <span className="material-symbols-outlined">auto_awesome</span>
-              )}
-              {isRegenerating ? 'Đang tạo...' : 'Tạo lại'}
-            </button>
+            {trip.userId === user?.id && (
+              <button
+                id="btn-regenerate"
+                onClick={handleRegenerate}
+                disabled={isRegenerating}
+                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-emerald-950 font-black rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isRegenerating ? (
+                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                ) : (
+                  <span className="material-symbols-outlined">auto_awesome</span>
+                )}
+                {isRegenerating ? 'Đang tạo...' : 'Tạo lại'}
+              </button>
+            )}
           </div>
         </header>
       </div>
@@ -482,8 +495,23 @@ export default function Itinerary() {
         <div className="lg:col-span-7 space-y-8">
           {sortedItineraries.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-emerald-100 dark:border-emerald-900/50 shadow-premium">
-              <span className="material-symbols-outlined text-5xl text-emerald-300 mb-4 block">hourglass_empty</span>
-              <p className="text-emerald-900/60 dark:text-emerald-400/60 font-medium">Lịch trình đang được tạo, vui lòng đợi...</p>
+              <span className="material-symbols-outlined text-5xl text-emerald-300 mb-4 block">
+                {trip.status === 'PLANNING' ? 'edit_calendar' : 'hourglass_empty'}
+              </span>
+              <p className="text-emerald-900/60 dark:text-emerald-400/60 font-medium text-lg">
+                {trip.status === 'PLANNING' 
+                  ? 'Chuyến đi này chưa được lên lịch trình chi tiết.'
+                  : 'Lịch trình đang được tạo, vui lòng đợi...'}
+              </p>
+              {trip.status === 'PLANNING' && trip.userId === user?.id && (
+                <button
+                  onClick={handleRegenerate}
+                  disabled={isRegenerating}
+                  className="mt-6 px-8 py-3 bg-emerald-500 text-white rounded-full font-bold shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition-colors"
+                >
+                  {isRegenerating ? 'Đang tạo...' : 'Tạo lịch trình ngay'}
+                </button>
+              )}
             </div>
           ) : (
             sortedItineraries.map((itinerary, idx) => (
@@ -496,6 +524,7 @@ export default function Itinerary() {
                 onEditActivity={handleEditActivity}
                 onDeleteActivity={handleDeleteActivity}
                 onShareActivity={handleShareActivity}
+                isOwner={trip.userId === user?.id}
               />
             ))
           )}
@@ -521,25 +550,27 @@ export default function Itinerary() {
           </div>
 
           {/* AI Suggestion */}
-          <div className="bg-emerald-900 rounded-3xl p-8 border border-emerald-800 relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full"></div>
-            <div className="relative z-10">
-              <span className="bg-emerald-400 text-emerald-950 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block">Trí tuệ nhân tạo</span>
-              <h4 className="text-2xl font-display font-bold text-white mb-3 leading-tight">Bạn muốn tinh chỉnh thêm?</h4>
-              <p className="text-emerald-200/70 text-sm mb-8">AI sẵn sàng tạo lại lịch trình hoàn toàn mới dựa trên sở thích của bạn.</p>
-              <button
-                onClick={handleRegenerate}
-                disabled={isRegenerating}
-                className="w-full py-4 bg-white text-emerald-900 rounded-2xl font-black text-sm shadow-xl hover:bg-emerald-50 transition-all disabled:opacity-70"
-              >
-                {isRegenerating ? 'Đang xử lý...' : 'Tạo lại lịch trình ngay'}
-              </button>
+          {trip.userId === user?.id && (
+            <div className="bg-emerald-900 rounded-3xl p-8 border border-emerald-800 relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full"></div>
+              <div className="relative z-10">
+                <span className="bg-emerald-400 text-emerald-950 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block">Trí tuệ nhân tạo</span>
+                <h4 className="text-2xl font-display font-bold text-white mb-3 leading-tight">Bạn muốn tinh chỉnh thêm?</h4>
+                <p className="text-emerald-200/70 text-sm mb-8">AI sẵn sàng tạo lại lịch trình hoàn toàn mới dựa trên sở thích của bạn.</p>
+                <button
+                  onClick={handleRegenerate}
+                  disabled={isRegenerating}
+                  className="w-full py-4 bg-white text-emerald-900 rounded-2xl font-black text-sm shadow-xl hover:bg-emerald-50 transition-all disabled:opacity-70"
+                >
+                  {isRegenerating ? 'Đang xử lý...' : 'Tạo lại lịch trình ngay'}
+                </button>
+              </div>
+              <span
+                className="material-symbols-outlined absolute -right-6 -bottom-6 text-[10rem] text-white/5 rotate-12"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >auto_awesome</span>
             </div>
-            <span
-              className="material-symbols-outlined absolute -right-6 -bottom-6 text-[10rem] text-white/5 rotate-12"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >auto_awesome</span>
-          </div>
+          )}
         </div>
       </div>
 

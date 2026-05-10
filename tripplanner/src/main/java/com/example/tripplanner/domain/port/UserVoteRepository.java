@@ -7,4 +7,5 @@ import java.util.UUID;
 public interface UserVoteRepository {
     UserVote save(UserVote userVote);
     Optional<UserVote> findByUserIdAndSharedContentId(UUID userId, UUID sharedContentId);
+    void delete(UserVote userVote);
 }
