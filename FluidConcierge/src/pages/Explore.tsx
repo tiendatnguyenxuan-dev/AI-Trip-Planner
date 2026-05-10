@@ -42,6 +42,7 @@ const Explore: React.FC = () => {
 
   const [selectedDetailItem, setSelectedDetailItem] = useState<SharedContentResponse | null>(null);
   const [selectedExploreItem, setSelectedExploreItem] = useState<ExploreItem | null>(null);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
@@ -229,8 +230,7 @@ const Explore: React.FC = () => {
             </button>
             <button
               onClick={() => {
-                alert("Để chia sẻ Trải nghiệm/Hoạt động, vui lòng vào Chuyến đi của bạn (My Trips) -> Chọn chuyến đi -> Bấm Chia sẻ trên Hoạt động cụ thể nhé!");
-                navigate('/');
+                setShowComingSoon(true);
               }}
               className="px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-xl font-bold transition-all flex items-center gap-2 border border-white/20"
             >
@@ -419,6 +419,36 @@ const Explore: React.FC = () => {
         isOpen={isLightboxOpen}
         onClose={() => setIsLightboxOpen(false)}
       />
+
+      {/* Coming Soon Card/Modal */}
+      <AnimatePresence>
+        {showComingSoon && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowComingSoon(false)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 w-full max-w-sm shadow-2xl relative border border-emerald-100 dark:border-emerald-900/50 text-center"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="material-symbols-outlined text-4xl text-emerald-500 animate-bounce">construction</span>
+              </div>
+              <h3 className="text-2xl font-black text-emerald-950 dark:text-emerald-50 mb-4 font-display">Sắp ra mắt!</h3>
+              <p className="text-emerald-900/60 dark:text-emerald-50/60 font-medium mb-8">
+                Tính năng chia sẻ trải nghiệm trực tiếp đang được hoàn thiện. 
+                Vui lòng quay lại sau nhé!
+              </p>
+              <button
+                onClick={() => setShowComingSoon(false)}
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-emerald-500/20"
+              >
+                Đã hiểu
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
