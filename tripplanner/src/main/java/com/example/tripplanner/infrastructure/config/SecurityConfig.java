@@ -28,15 +28,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/v1/explore", "/api/v1/explore/**").permitAll()
-                        .requestMatchers("/api/v1/community/trending", "/api/v1/community/explore/**", "/api/v1/community/*/comments", "/api/v1/community/uploads/**").permitAll()
+                        .requestMatchers("/api/v1/community/trending", "/api/v1/community/explore/**",
+                                "/api/v1/community/*/comments", "/api/v1/community/uploads/**")
+                        .permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized - Please login again");
-                        })
-                )
+                            response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED,
+                                    "Unauthorized - Please login again");
+                        }))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

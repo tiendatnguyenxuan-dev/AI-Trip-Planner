@@ -139,10 +139,10 @@ export const communityApi = {
   shareContent: (request: ShareContentRequest, images?: File[]): Promise<SharedContentResponse> => {
     // Keep this for backward compatibility if needed, but use the new logic internally
     const formData = new FormData();
-    formData.append('type', request.type);
-    formData.append('refId', request.refId);
-    formData.append('content', request.content);
-    if (request.rating) formData.append('rating', request.rating.toString());
+    formData.append('type', request.type || '');
+    formData.append('refId', request.refId || '');
+    formData.append('content', request.content || '');
+    if (request.rating !== undefined && request.rating !== null) formData.append('rating', request.rating.toString());
     if (request.description) formData.append('description', request.description);
     
     if (images && images.length > 0) {
@@ -167,5 +167,8 @@ export const communityApi = {
 
   getExploreItemReviews: (id: string): Promise<SharedContentResponse[]> =>
     apiClient.get(`/community/explore/${id}/reviews`).then(r => r.data),
+    
+  like: (id: string): Promise<void> =>
+    apiClient.post(`/experiences/${id}/like`).then(r => r.data),
 };
 

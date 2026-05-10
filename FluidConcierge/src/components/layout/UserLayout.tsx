@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { BellNotification } from './BellNotification';
 
 export default function UserLayout() {
   const navigate = useNavigate();
@@ -41,9 +42,7 @@ export default function UserLayout() {
           {/* Right: Actions */}
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2">
-              <button className="p-2 text-slate-500 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-all">
-                <span className="material-symbols-outlined">notifications</span>
-              </button>
+              <BellNotification />
               <button className="p-2 text-slate-500 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-all">
                 <span className="material-symbols-outlined">settings</span>
               </button>

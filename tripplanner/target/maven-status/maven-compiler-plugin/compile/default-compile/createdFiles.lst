@@ -9,6 +9,7 @@ com\example\tripplanner\infrastructure\persistence\ExploreItemEntity.class
 com\example\tripplanner\infrastructure\persistence\AiLogEntity$AiLogEntityBuilder.class
 com\example\tripplanner\infrastructure\persistence\JpaUserRepository.class
 com\example\tripplanner\application\dto\ParseTripRequest.class
+com\example\tripplanner\application\service\InteractionService.class
 com\example\tripplanner\application\usecase\GenerateTripPlanUseCase.class
 com\example\tripplanner\domain\model\Recommendation.class
 com\example\tripplanner\application\dto\RecommendationResponse$RecommendationResponseBuilder.class
@@ -23,10 +24,8 @@ com\example\tripplanner\application\usecase\GetExploreItemByIdUseCase.class
 com\example\tripplanner\infrastructure\persistence\JpaUserVoteRepository.class
 com\example\tripplanner\application\dto\GenerateRequest.class
 com\example\tripplanner\application\dto\AiLogSummaryResponse$AiLogSummaryResponseBuilder.class
-com\example\tripplanner\infrastructure\persistence\AiLogRepositoryImpl.class
 com\example\tripplanner\application\dto\GenerateResponse.class
 com\example\tripplanner\application\dto\ActivityCandidateResponse$ActivityCandidateResponseBuilder.class
-com\example\tripplanner\infrastructure\persistence\ExploreRepositoryImpl.class
 com\example\tripplanner\application\usecase\GetTripsByUserUseCase.class
 com\example\tripplanner\application\dto\SharedContentResponse$SharedContentResponseBuilder.class
 com\example\tripplanner\application\usecase\GetTrendingContentUseCase.class
@@ -38,6 +37,7 @@ com\example\tripplanner\domain\model\Trip$TripBuilder.class
 com\example\tripplanner\application\dto\AiLogSummaryResponse.class
 com\example\tripplanner\domain\port\CommentRepository.class
 com\example\tripplanner\interfaces\controller\AnalyticsController.class
+com\example\tripplanner\interfaces\controller\InteractionController.class
 com\example\tripplanner\application\usecase\GetExploreItemsUseCase.class
 com\example\tripplanner\application\dto\ActivityResponse$ActivityResponseBuilder.class
 com\example\tripplanner\infrastructure\persistence\SharedContentEntity.class
@@ -47,8 +47,6 @@ com\example\tripplanner\infrastructure\persistence\ActivityCandidateEntity$Activ
 com\example\tripplanner\application\port\TokenProvider.class
 com\example\tripplanner\domain\port\ActivityRepository.class
 com\example\tripplanner\interfaces\controller\AiLogController.class
-com\example\tripplanner\infrastructure\persistence\UserRepositoryImpl.class
-com\example\tripplanner\infrastructure\persistence\UserVoteRepositoryImpl.class
 com\example\tripplanner\domain\model\ExploreType.class
 com\example\tripplanner\application\dto\GenerateResponse$GenerateResponseBuilder.class
 com\example\tripplanner\application\dto\ItineraryResponse.class
@@ -62,6 +60,7 @@ com\example\tripplanner\domain\port\UserRepository.class
 com\example\tripplanner\domain\model\Role.class
 com\example\tripplanner\application\dto\AiLogDetailResponse$AiLogDetailResponseBuilder.class
 com\example\tripplanner\application\orchestrator\AIOrchestrator$1.class
+com\example\tripplanner\infrastructure\config\WebSocketConfig.class
 com\example\tripplanner\interfaces\controller\AiController.class
 com\example\tripplanner\domain\model\Trip.class
 com\example\tripplanner\application\dto\AiServiceParseResponse.class
@@ -76,6 +75,7 @@ com\example\tripplanner\domain\port\TripRepository.class
 com\example\tripplanner\interfaces\controller\ExploreController.class
 com\example\tripplanner\infrastructure\persistence\RecommendationEntity.class
 com\example\tripplanner\domain\model\ActivityCandidate$ActivityCandidateBuilder.class
+com\example\tripplanner\infrastructure\config\WebSocketConfig$1.class
 com\example\tripplanner\infrastructure\config\SecurityConfig.class
 com\example\tripplanner\application\usecase\FinalizeTripPlanUseCase.class
 com\example\tripplanner\application\dto\RateRequest.class
@@ -91,7 +91,6 @@ com\example\tripplanner\application\usecase\GetCommentsUseCase.class
 com\example\tripplanner\infrastructure\persistence\TripEntity$TripEntityBuilder.class
 com\example\tripplanner\interfaces\controller\ItineraryController.class
 com\example\tripplanner\application\usecase\RegisterUserUseCase.class
-com\example\tripplanner\infrastructure\persistence\SharedContentRepositoryImpl.class
 com\example\tripplanner\domain\model\Comment$CommentBuilder.class
 com\example\tripplanner\infrastructure\ai\OpenRouterAiService.class
 com\example\tripplanner\application\dto\AiServiceEntityResponse.class
@@ -110,16 +109,15 @@ com\example\tripplanner\application\usecase\GetTrendingExploreItemsUseCase.class
 com\example\tripplanner\application\usecase\GetItinerariesUseCase.class
 com\example\tripplanner\infrastructure\persistence\UserEntity.class
 com\example\tripplanner\application\usecase\RegenerateTripPlanUseCase.class
-com\example\tripplanner\infrastructure\persistence\ActivityRepositoryImpl.class
 com\example\tripplanner\application\usecase\ShareContentUseCase.class
 com\example\tripplanner\infrastructure\persistence\JpaActivityRepository.class
 com\example\tripplanner\application\mapper\TripMapper.class
 com\example\tripplanner\interfaces\controller\AuthController.class
 com\example\tripplanner\infrastructure\persistence\SharedContentEntity$SharedContentEntityBuilder.class
-com\example\tripplanner\infrastructure\persistence\CommentRepositoryImpl.class
 com\example\tripplanner\application\dto\ActivityCandidateResponse.class
 com\example\tripplanner\infrastructure\security\JwtAuthenticationFilter.class
 com\example\tripplanner\domain\model\Activity$ActivityBuilder.class
+com\example\tripplanner\domain\model\NotificationPayload$NotificationPayloadBuilder.class
 com\example\tripplanner\domain\model\ExploreItem$ExploreItemBuilder.class
 com\example\tripplanner\application\dto\AiServiceParseRequest$AiServiceParseRequestBuilder.class
 com\example\tripplanner\domain\model\Activity.class
@@ -133,13 +131,11 @@ com\example\tripplanner\application\usecase\GetActivityCandidatesUseCase.class
 com\example\tripplanner\infrastructure\security\CustomUserDetailsService.class
 com\example\tripplanner\infrastructure\persistence\JpaTripRepository.class
 com\example\tripplanner\domain\model\Itinerary.class
-com\example\tripplanner\infrastructure\persistence\TripRepositoryImpl.class
 com\example\tripplanner\TripplannerApplication.class
 com\example\tripplanner\infrastructure\config\DataMigrationRunner.class
 com\example\tripplanner\infrastructure\config\StaticResourceConfig.class
 com\example\tripplanner\application\validator\ValidationResult.class
 com\example\tripplanner\domain\port\SharedContentRepository.class
-com\example\tripplanner\infrastructure\persistence\ItineraryRepositoryImpl.class
 com\example\tripplanner\application\dto\RetryStatsDto$RetryStatsDtoBuilder.class
 com\example\tripplanner\domain\model\AiLog$AiLogBuilder.class
 com\example\tripplanner\infrastructure\persistence\ItineraryEntity$ItineraryEntityBuilder.class
@@ -175,6 +171,7 @@ com\example\tripplanner\application\dto\ActivityResponse.class
 com\example\tripplanner\application\usecase\RegenerateSingleDayUseCase.class
 com\example\tripplanner\infrastructure\security\JwtTokenProvider.class
 com\example\tripplanner\infrastructure\persistence\ExploreItemEntity$ExploreItemEntityBuilder.class
+com\example\tripplanner\domain\model\NotificationPayload.class
 com\example\tripplanner\application\dto\FinalizeTripRequest.class
 com\example\tripplanner\application\dto\UserResponse$UserResponseBuilder.class
 com\example\tripplanner\infrastructure\persistence\JpaExploreItemRepository.class

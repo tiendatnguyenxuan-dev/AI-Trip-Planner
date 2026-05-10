@@ -5,6 +5,7 @@ import { communityApi } from '../../services/api';
 import type { SharedContentResponse, CommentResponse } from '../../types/trip';
 import ImageCarousel from './ImageCarousel';
 import ImageLightbox from './ImageLightbox';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 interface SharedContentDetailModalProps {
   isOpen: boolean;
@@ -26,6 +27,24 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [localVotes, setLocalVotes] = useState(item?.totalVotes || 0);
+  const { isConnected, subscribe } = useWebSocket();
+
+  useEffect(() => {
+    if (item) {
+      setLocalVotes(item.totalVotes);
+    }
+  }, [item?.totalVotes]);
+
+  useEffect(() => {
+    if (isConnected && item?.id) {
+      const topic = `/topic/experiences/${item.id}`;
+      const subscription = subscribe(topic, (message: { newLikeCount: number }) => {
+        setLocalVotes(message.newLikeCount);
+      });
+      return () => subscription?.unsubscribe();
+    }
+  }, [isConnected, item?.id, subscribe]);
 
   useEffect(() => {
     if (isOpen && item) {
@@ -132,7 +151,7 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
                     className={`flex items-center gap-1 font-bold px-3 py-1.5 rounded-xl transition-colors ${item.hasUpvoted ? 'text-white bg-emerald-500 hover:bg-emerald-600' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'}`}
                   >
                     <span className="material-symbols-outlined" style={{ fontVariationSettings: item.hasUpvoted ? "'FILL' 1" : "'FILL' 0" }}>thumb_up</span>
-                    {item.totalVotes} <span className={item.hasUpvoted ? "text-emerald-50 font-normal text-sm" : "text-emerald-600/70 font-normal text-sm"}>lượt thích</span>
+                    {localVotes} <span className={item.hasUpvoted ? "text-emerald-50 font-normal text-sm" : "text-emerald-600/70 font-normal text-sm"}>lượt thích</span>
                   </button>
                   <div className="flex items-center gap-1 text-emerald-600 font-bold">
                     <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>comment</span>

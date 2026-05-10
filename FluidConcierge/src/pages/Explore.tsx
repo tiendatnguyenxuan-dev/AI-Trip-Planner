@@ -110,14 +110,30 @@ const Explore: React.FC = () => {
 
   const handleRate = async (id: string, isLike: boolean) => {
     try {
-      const stars = isLike ? 5 : 0;
-      const updated = await communityApi.rate(id, stars);
-      // Optimistically update
-      setTrendingTrips(prev => prev.map(t => t.id === id ? { ...t, rating: updated.rating, totalVotes: updated.totalVotes, hasUpvoted: isLike } : t));
-      setHotActivities(prev => prev.map(a => a.id === id ? { ...a, rating: updated.rating, totalVotes: updated.totalVotes, hasUpvoted: isLike } : a));
-      setSelectedDetailItem(prev => prev?.id === id ? { ...prev, rating: updated.rating, totalVotes: updated.totalVotes, hasUpvoted: isLike } : prev);
+      // Use the new strict DB toggle endpoint
+      await communityApi.like(id);
+      
+      // Update local state optimistically
+      const updateList = (list: SharedContentResponse[]) => 
+        list.map(item => {
+          if (item.id === id) {
+            const newCount = isLike ? item.totalVotes + 1 : Math.max(0, item.totalVotes - 1);
+            return { ...item, hasUpvoted: isLike, totalVotes: newCount };
+          }
+          return item;
+        });
+
+      setTrendingTrips(prev => updateList(prev));
+      setHotActivities(prev => updateList(prev));
+      setSelectedDetailItem(prev => {
+        if (prev?.id === id) {
+          const newCount = isLike ? prev.totalVotes + 1 : Math.max(0, prev.totalVotes - 1);
+          return { ...prev, hasUpvoted: isLike, totalVotes: newCount };
+        }
+        return prev;
+      });
     } catch (error) {
-      console.error('Rate failed', error);
+      console.error('Like failed', error);
     }
   };
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import type { SharedContentResponse } from '../../types/trip';
 import ImageCarousel from './ImageCarousel';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 export interface BaseContentCardProps {
   item: SharedContentResponse;
@@ -25,6 +26,25 @@ const BaseContentCard: React.FC<BaseContentCardProps> = ({
   const images = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls : [];
   const [isLiked, setIsLiked] = React.useState(item.hasUpvoted || false);
   const [localVotes, setLocalVotes] = React.useState(item.totalVotes);
+  const { isConnected, subscribe } = useWebSocket();
+
+  // Sync state with props when they change (critical for F5 persistence and real-time updates)
+  React.useEffect(() => {
+    setIsLiked(item.hasUpvoted || false);
+    setLocalVotes(item.totalVotes);
+  }, [item.hasUpvoted, item.totalVotes]);
+
+  // Real-time WebSocket subscription for like count
+  React.useEffect(() => {
+    if (isConnected) {
+      const topic = `/topic/experiences/${item.id}`;
+      const subscription = subscribe(topic, (message: { newLikeCount: number }) => {
+        console.log(`[WebSocket] Received new like count for ${item.id}:`, message.newLikeCount);
+        setLocalVotes(message.newLikeCount);
+      });
+      return () => subscription?.unsubscribe();
+    }
+  }, [isConnected, item.id, subscribe]);
 
   const handleUpvoteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -41,9 +61,9 @@ const BaseContentCard: React.FC<BaseContentCardProps> = ({
       className={`bg-white/70 backdrop-blur-sm rounded-2xl overflow-hidden border border-emerald-100/50 shadow-sm hover:shadow-md transition-all group flex flex-col cursor-pointer ${className}`}
     >
       <div onClick={(e) => e.stopPropagation()}>
-        <ImageCarousel 
-          images={images} 
-          className={imageClassName} 
+        <ImageCarousel
+          images={images}
+          className={imageClassName}
           onImageClick={(index) => {
             if (onImageOpen) {
               onImageOpen(images, index);
@@ -70,11 +90,10 @@ const BaseContentCard: React.FC<BaseContentCardProps> = ({
 
           <button
             onClick={handleUpvoteClick}
-            className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-              isLiked 
-                ? 'text-white bg-emerald-500 hover:bg-emerald-600' 
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors cursor-pointer ${isLiked
+                ? 'text-white bg-emerald-500 hover:bg-emerald-600'
                 : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>
               thumb_up

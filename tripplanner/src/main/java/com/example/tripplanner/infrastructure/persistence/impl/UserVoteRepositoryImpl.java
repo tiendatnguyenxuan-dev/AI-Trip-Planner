@@ -36,4 +36,14 @@ public class UserVoteRepositoryImpl implements UserVoteRepository {
         UserVoteEntity entity = mapper.toEntity(userVote);
         jpaUserVoteRepository.delete(entity);
     }
+
+    @Override
+    public int countBySharedContentId(UUID sharedContentId) {
+        return jpaUserVoteRepository.countBySharedContentId(sharedContentId);
+    }
+
+    @Override
+    public void flush() {
+        jpaUserVoteRepository.flush();
+    }
 }

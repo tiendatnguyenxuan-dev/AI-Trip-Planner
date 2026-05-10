@@ -8,4 +8,6 @@ public interface UserVoteRepository {
     UserVote save(UserVote userVote);
     Optional<UserVote> findByUserIdAndSharedContentId(UUID userId, UUID sharedContentId);
     void delete(UserVote userVote);
+    int countBySharedContentId(UUID sharedContentId);
+    void flush();
 }

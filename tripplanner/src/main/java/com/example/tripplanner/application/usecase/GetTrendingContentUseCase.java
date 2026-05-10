@@ -8,11 +8,13 @@ import com.example.tripplanner.domain.model.SharedContent;
 import com.example.tripplanner.domain.port.ActivityRepository;
 import com.example.tripplanner.domain.port.SharedContentRepository;
 import com.example.tripplanner.domain.port.TripRepository;
+import com.example.tripplanner.domain.port.UserVoteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,16 +24,28 @@ public class GetTrendingContentUseCase {
     private final SharedContentRepository sharedContentRepository;
     private final ActivityRepository activityRepository;
     private final TripRepository tripRepository;
+    private final UserVoteRepository userVoteRepository;
 
     @Transactional(readOnly = true)
-    public List<SharedContentResponse> execute(ShareType type, int limit) {
+    public List<SharedContentResponse> execute(ShareType type, int limit, UUID currentUserId) {
         return sharedContentRepository.getTrending(type, limit).stream()
-                .map(this::buildResponse)
+                .map(content -> buildResponse(content, currentUserId))
                 .collect(Collectors.toList());
     }
 
-    private SharedContentResponse buildResponse(SharedContent content) {
+    private SharedContentResponse buildResponse(SharedContent content, UUID currentUserId) {
         SharedContentResponse response = SharedContentMapper.toResponse(content);
+
+        // Bug 1 & 2 Fix: Actively count likes from DB and check user status
+        int dbLikeCount = userVoteRepository.countBySharedContentId(content.getId());
+        response.setTotalVotes(dbLikeCount);
+        
+        if (currentUserId != null) {
+            boolean hasLiked = userVoteRepository.findByUserIdAndSharedContentId(currentUserId, content.getId()).isPresent();
+            response.setHasUpvoted(hasLiked);
+        } else {
+            response.setHasUpvoted(false);
+        }
 
         // Enrich with reference data
         if (content.getType() == ShareType.ACTIVITY) {

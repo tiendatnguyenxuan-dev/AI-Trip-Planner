@@ -81,13 +81,18 @@ public class CommunityController {
 
     @GetMapping("/trending")
     public ResponseEntity<List<SharedContentResponse>> getTrending(
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam ShareType type,
             @RequestParam(defaultValue = "6") int limit) {
-        return ResponseEntity.ok(getTrendingContentUseCase.execute(type, limit));
+        UUID userId = (principal != null) ? principal.getId() : null;
+        return ResponseEntity.ok(getTrendingContentUseCase.execute(type, limit, userId));
     }
 
     @GetMapping("/explore/{id}/reviews")
-    public ResponseEntity<List<SharedContentResponse>> getExploreItemReviews(@PathVariable UUID id) {
-        return ResponseEntity.ok(getExploreItemReviewsUseCase.execute(id));
+    public ResponseEntity<List<SharedContentResponse>> getExploreItemReviews(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID id) {
+        UUID userId = (principal != null) ? principal.getId() : null;
+        return ResponseEntity.ok(getExploreItemReviewsUseCase.execute(id, userId));
     }
 }
