@@ -35,6 +35,7 @@ public interface AdminManagementUseCase {
 
     // Explore Items (Places) Management
     List<ExploreItem> getAllExploreItems();
+    ExploreItem createExploreItem(ExploreItem item);
     ExploreItem updateExploreItem(UUID id, ExploreItem item);
     void deleteExploreItem(UUID id);
 }

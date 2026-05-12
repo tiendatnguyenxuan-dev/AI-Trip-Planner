@@ -170,6 +170,14 @@ export const communityApi = {
   getTrending: (type: 'ACTIVITY' | 'TRIP' | 'EXPLORE_ITEM', limit: number = 6): Promise<SharedContentResponse[]> =>
     apiClient.get('/community/trending', { params: { type, limit } }).then(r => r.data),
 
+  uploadImage: (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post('/community/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(r => r.data);
+  },
+
   getExploreItemReviews: (id: string): Promise<SharedContentResponse[]> =>
     apiClient.get(`/community/explore/${id}/reviews`).then(r => r.data),
 
@@ -216,9 +224,20 @@ export const adminApi = {
   getPlaces: (): Promise<ExploreItem[]> =>
     apiClient.get('/admin/places').then(r => r.data),
 
+  createPlace: (body: Partial<ExploreItem>): Promise<ExploreItem> =>
+    apiClient.post('/admin/places', body).then(r => r.data),
+
   updatePlace: (id: string, body: Partial<ExploreItem>): Promise<ExploreItem> =>
     apiClient.put(`/admin/places/${id}`, body).then(r => r.data),
 
   deletePlace: (id: string): Promise<void> =>
     apiClient.delete(`/admin/places/${id}`).then(r => r.data),
+
+  uploadImage: (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post('/community/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(r => r.data);
+  },
 };

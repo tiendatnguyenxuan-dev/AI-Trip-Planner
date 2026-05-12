@@ -116,6 +116,11 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllExploreItems());
     }
 
+    @PostMapping("/places")
+    public ResponseEntity<ExploreItem> createPlace(@RequestBody ExploreItem item) {
+        return ResponseEntity.ok(adminService.createExploreItem(item));
+    }
+
     @PutMapping("/places/{id}")
     public ResponseEntity<ExploreItem> updatePlace(@PathVariable UUID id, @RequestBody ExploreItem item) {
         return ResponseEntity.ok(adminService.updateExploreItem(id, item));

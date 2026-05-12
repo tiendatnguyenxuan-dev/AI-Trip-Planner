@@ -199,6 +199,13 @@ public class AdminManagementService implements AdminManagementUseCase {
 
     @Override
     @Transactional
+    public ExploreItem createExploreItem(ExploreItem item) {
+        log.info("Creating new explore item: {}", item.getTitle());
+        return exploreRepository.save(item);
+    }
+
+    @Override
+    @Transactional
     public ExploreItem updateExploreItem(UUID id, ExploreItem item) {
         log.info("Updating explore item {}", id);
         ExploreItem existing = exploreRepository.findById(id)
@@ -212,7 +219,9 @@ public class AdminManagementService implements AdminManagementUseCase {
         existing.setMinBudget(item.getMinBudget());
         existing.setMaxBudget(item.getMaxBudget());
         existing.setDurationDays(item.getDurationDays());
+        existing.setThumbnailUrl(item.getThumbnailUrl());
         existing.setDescription(item.getDescription());
+        existing.setPopularityScore(item.getPopularityScore());
         
         return exploreRepository.save(existing);
     }

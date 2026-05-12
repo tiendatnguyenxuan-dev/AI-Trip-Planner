@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/v1/explore", "/api/v1/explore/**").permitAll()
-                        .requestMatchers("/api/v1/community/trending", "/api/v1/community/explore/**", "/api/v1/community/*/comments", "/api/v1/community/uploads/**").permitAll()
+                        .requestMatchers("/api/v1/community/trending", "/api/v1/community/explore/**", "/api/v1/community/*/comments", "/api/v1/community/uploads/**", "/api/v1/community/upload").permitAll()
                         .requestMatchers("/api/v1/admin/**", "/api/v1/community/admin/**").hasRole("ADMIN")
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
