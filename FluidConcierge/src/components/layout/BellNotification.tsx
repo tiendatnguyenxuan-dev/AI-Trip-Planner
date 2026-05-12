@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Bell, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket.tsx';
 import type { NotificationPayload } from '../../types/websocket';
 
 export const BellNotification = () => {

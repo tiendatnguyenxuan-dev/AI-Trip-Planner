@@ -5,7 +5,7 @@ import { communityApi } from '../../services/api';
 import type { SharedContentResponse, CommentResponse } from '../../types/trip';
 import ImageCarousel from './ImageCarousel';
 import ImageLightbox from './ImageLightbox';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket.tsx';
 
 interface SharedContentDetailModalProps {
   isOpen: boolean;

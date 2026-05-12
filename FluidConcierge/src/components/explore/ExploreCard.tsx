@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import type { ExploreItem } from '../../types/trip';
 import TagBadge from './TagBadge';
 
-import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket.tsx';
 
 interface ExploreCardProps {
   item: ExploreItem;

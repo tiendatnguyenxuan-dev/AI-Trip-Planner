@@ -130,6 +130,11 @@ export const exploreApi = {
     apiClient.get('/explore/recommendation').then(r => r.data),
 };
 
+export const experienceApi = {
+  like: (id: string): Promise<void> =>
+    apiClient.post(`/experiences/${id}/like`).then(r => r.data),
+};
+
 // ── Community endpoints ────────────────────────────────────────────────────────
 
 export const communityApi = {

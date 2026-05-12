@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { exploreApi, communityApi, tripApi } from '../services/api';
+import { toast } from 'react-hot-toast';
+import { exploreApi, communityApi, tripApi, experienceApi } from '../services/api';
 import type { SharedContentResponse, ExploreItem, TripResponse } from '../types/trip';
 import { useAuth } from '../context/AuthContext';
 import ShareModal from '../components/ShareModal';
@@ -109,45 +110,60 @@ const Explore: React.FC = () => {
   };
 
   const handleRate = async (id: string, isLike: boolean) => {
-    try {
-      // Use the new strict DB toggle endpoint
-      await communityApi.like(id);
-      
-      // Update local state optimistically
-      const updateList = (list: SharedContentResponse[]) => 
-        list.map(item => {
-          if (item.id === id) {
-            const newCount = isLike ? item.totalVotes + 1 : Math.max(0, item.totalVotes - 1);
-            return { ...item, hasUpvoted: isLike, totalVotes: newCount };
-          }
-          return item;
-        });
+    // Save current state for revert
+    const previousTrending = [...trendingTrips];
+    const previousHot = [...hotActivities];
+    const previousAll = [...allItems];
+    const previousDetail = selectedDetailItem ? { ...selectedDetailItem } : null;
+    const previousExplore = selectedExploreItem ? { ...selectedExploreItem } : null;
 
-      setTrendingTrips(prev => updateList(prev));
-      setHotActivities(prev => updateList(prev));
-      setAllItems(prev => prev.map(item => {
+    // Update local state optimistically
+    const updateList = (list: SharedContentResponse[]) => 
+      list.map(item => {
         if (item.id === id) {
-          const newCount = isLike ? (item.totalVotes || 0) + 1 : Math.max(0, (item.totalVotes || 0) - 1);
+          const newCount = isLike ? item.totalVotes + 1 : Math.max(0, item.totalVotes - 1);
           return { ...item, hasUpvoted: isLike, totalVotes: newCount };
         }
         return item;
-      }));
-      setSelectedDetailItem(prev => {
-        if (prev?.id === id) {
-          const newCount = isLike ? prev.totalVotes + 1 : Math.max(0, prev.totalVotes - 1);
-          return { ...prev, hasUpvoted: isLike, totalVotes: newCount };
-        }
-        return prev;
       });
-      setSelectedExploreItem(prev => {
-        if (prev?.id === id) {
-          const newCount = isLike ? (prev.totalVotes || 0) + 1 : Math.max(0, (prev.totalVotes || 0) - 1);
-          return { ...prev, hasUpvoted: isLike, totalVotes: newCount };
-        }
-        return prev;
-      });
+
+    setTrendingTrips(prev => updateList(prev));
+    setHotActivities(prev => updateList(prev));
+    setAllItems(prev => prev.map(item => {
+      if (item.id === id) {
+        const newCount = isLike ? (item.totalVotes || 0) + 1 : Math.max(0, (item.totalVotes || 0) - 1);
+        return { ...item, hasUpvoted: isLike, totalVotes: newCount };
+      }
+      return item;
+    }));
+    
+    if (selectedDetailItem?.id === id) {
+      setSelectedDetailItem(prev => prev ? { 
+        ...prev, 
+        hasUpvoted: isLike, 
+        totalVotes: isLike ? prev.totalVotes + 1 : Math.max(0, prev.totalVotes - 1) 
+      } : null);
+    }
+    
+    if (selectedExploreItem?.id === id) {
+      setSelectedExploreItem(prev => prev ? { 
+        ...prev, 
+        hasUpvoted: isLike, 
+        totalVotes: isLike ? (prev.totalVotes || 0) + 1 : Math.max(0, (prev.totalVotes || 0) - 1) 
+      } : null);
+    }
+
+    try {
+      await experienceApi.like(id);
     } catch (error) {
       console.error('Like failed', error);
+      // Revert to previous state on failure
+      setTrendingTrips(previousTrending);
+      setHotActivities(previousHot);
+      setAllItems(previousAll);
+      setSelectedDetailItem(previousDetail);
+      setSelectedExploreItem(previousExplore);
+      toast.error("Không thể thực hiện thao tác");
     }
   };
 

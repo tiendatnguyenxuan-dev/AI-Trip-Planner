@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import type { SharedContentResponse } from '../../types/trip';
 import ImageCarousel from './ImageCarousel';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket.tsx';
 
 export interface BaseContentCardProps {
   item: SharedContentResponse;

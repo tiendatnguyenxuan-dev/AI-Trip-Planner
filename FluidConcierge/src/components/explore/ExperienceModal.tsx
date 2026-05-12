@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Heart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket.tsx';
+import { experienceApi } from '../../services/api';
 
 interface ExperienceModalProps {
   experienceId: string;
@@ -51,20 +52,7 @@ export const ExperienceModal: React.FC<ExperienceModalProps> = ({
     setLikeCount((prev) => wasLiked ? prev - 1 : prev + 1);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/experiences/${experienceId}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-          throw new Error("Failed to process like");
-      }
-      
-      // Optional: toast.success(wasLiked ? "Đã bỏ thích" : "Đã thích");
+      await experienceApi.like(experienceId);
     } catch (error) {
       // Revert optimistic update on failure
       setIsLiked(wasLiked);
