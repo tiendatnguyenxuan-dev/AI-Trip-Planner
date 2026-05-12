@@ -172,6 +172,9 @@ export const communityApi = {
 
   getExploreItemReviews: (id: string): Promise<SharedContentResponse[]> =>
     apiClient.get(`/community/explore/${id}/reviews`).then(r => r.data),
+
+  getTopContributors: (limit: number = 5): Promise<any[]> =>
+    apiClient.get(`/community/contributors`, { params: { limit } }).then(r => r.data),
 };
 
 export const adminApi = {

@@ -21,14 +21,14 @@ export default function Community() {
 
   const fetchContributors = async () => {
     try {
-      const data = await adminApi.getTopContributors(3);
+      const data = await adminApi.getTopContributors(5);
       setTopContributors(data);
     } catch (error) {
       console.error('Failed to fetch contributors:', error);
     }
   };
 
-  const fetchTrending = async () => {
+  const fetchTrending = async () => { 
     try {
       const [trips, activities] = await Promise.all([
         communityApi.getTrending('TRIP', 1),
@@ -290,7 +290,9 @@ export default function Community() {
                     <div className="min-w-0">
                       <h4 className="font-bold text-white text-sm truncate">{c.name}</h4>
                       <p className="text-xs text-slate-400 font-medium">
-                        {(c.totalImpact / 1000).toFixed(1)}k impact &bull; {c.contributionCount} Posts
+                      {c.totalImpact >= 1000 
+                        ? `${(c.totalImpact / 1000).toFixed(1)}k` 
+                        : c.totalImpact} impact &bull; {c.contributionCount} Posts
                       </p>
                     </div>
                   </div>

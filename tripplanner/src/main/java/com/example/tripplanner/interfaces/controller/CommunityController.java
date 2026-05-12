@@ -5,6 +5,7 @@ import com.example.tripplanner.application.dto.activity.*;
 import com.example.tripplanner.application.dto.itinerary.*;
 import com.example.tripplanner.application.dto.explore.*;
 import com.example.tripplanner.application.dto.community.*;
+import com.example.tripplanner.application.dto.ContributorResponse;
 import com.example.tripplanner.application.dto.auth.*;
 import com.example.tripplanner.application.dto.ai.*;
 import com.example.tripplanner.application.usecase.trip.*;
@@ -36,6 +37,7 @@ public class CommunityController {
     private final AddCommentUseCase addCommentUseCase;
     private final GetCommentsUseCase getCommentsUseCase;
     private final GetExploreItemReviewsUseCase getExploreItemReviewsUseCase;
+    private final GetTopContributorsUseCase getTopContributorsUseCase;
 
     @PostMapping(value = "/share", consumes = {"multipart/form-data"})
     public ResponseEntity<SharedContentResponse> shareContent(
@@ -106,5 +108,10 @@ public class CommunityController {
             @PathVariable UUID id) {
         UUID userId = (principal != null) ? principal.getId() : null;
         return ResponseEntity.ok(getExploreItemReviewsUseCase.execute(id, userId));
+    }
+
+    @GetMapping("/contributors")
+    public ResponseEntity<List<ContributorResponse>> getTopContributors(@RequestParam(defaultValue = "5") int limit) {
+        return ResponseEntity.ok(getTopContributorsUseCase.execute(limit));
     }
 }

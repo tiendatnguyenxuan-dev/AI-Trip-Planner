@@ -27,10 +27,10 @@ public interface JpaSharedContentRepository extends JpaRepository<SharedContentE
 
     long countByStatus(com.example.tripplanner.domain.model.ShareStatus status);
 
-    @Query("SELECT s.user, COUNT(s) as count FROM SharedContentEntity s " +
-           "WHERE s.status = 'PUBLISHED' " +
+    @Query("SELECT s.user, COUNT(s), COALESCE(SUM(s.totalVotes), 0) FROM SharedContentEntity s " +
+           "WHERE s.status = com.example.tripplanner.domain.model.ShareStatus.PUBLISHED " +
            "GROUP BY s.user " +
-           "ORDER BY count DESC")
+           "ORDER BY COALESCE(SUM(s.totalVotes), 0) DESC, COUNT(s) DESC")
     List<Object[]> findTopContributors(Pageable pageable);
 }
 

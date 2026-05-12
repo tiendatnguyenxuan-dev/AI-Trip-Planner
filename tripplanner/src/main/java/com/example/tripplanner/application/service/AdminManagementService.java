@@ -116,14 +116,15 @@ public class AdminManagementService implements AdminManagementUseCase {
 
         return results.stream().map(result -> {
             UserEntity userEntity = (UserEntity) result[0];
-            long count = (long) result[1];
+            long postCount = ((Number) result[1]).longValue();
+            long totalLikes = ((Number) result[2]).longValue();
 
             return ContributorResponse.builder()
                     .userId(userEntity.getId())
                     .name(userEntity.getName())
                     .email(userEntity.getEmail())
-                    .contributionCount(count)
-                    .totalImpact(count * 100)
+                    .contributionCount(postCount)
+                    .totalImpact(totalLikes)
                     .build();
         }).collect(Collectors.toList());
     }
