@@ -33,6 +33,7 @@ public class ExploreItemEntity {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "explore_item_tags", joinColumns = @JoinColumn(name = "explore_item_id"))
+    @OrderColumn(name = "tag_order")
     @Column(name = "tag")
     @Builder.Default
     private List<String> tags = new ArrayList<>();

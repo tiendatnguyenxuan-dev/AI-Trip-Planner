@@ -53,6 +53,7 @@ public class SharedContentEntity {
     
     @ElementCollection
     @CollectionTable(name = "shared_content_images", joinColumns = @JoinColumn(name = "shared_content_id"))
+    @OrderColumn(name = "image_order")
     @Column(name = "image_url")
     @Builder.Default
     private java.util.List<String> imageUrls = new java.util.ArrayList<>();
