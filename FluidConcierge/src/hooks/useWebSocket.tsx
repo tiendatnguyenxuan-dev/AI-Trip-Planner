@@ -29,7 +29,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (clientRef.current) return;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8090/ws'),
+      webSocketFactory: () => new SockJS(`${import.meta.env.VITE_API_URL || 'http://localhost:8090'}/ws`),
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
