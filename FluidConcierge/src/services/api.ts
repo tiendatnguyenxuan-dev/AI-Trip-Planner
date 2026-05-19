@@ -90,6 +90,7 @@ export interface ParseTripResult {
   budgetTier: 'budget' | 'standard' | 'luxury' | null;
   travelStyles: string[];
   rawSummary: string | null;
+  destinationIsSuggested?: boolean;
 }
 
 export const aiApi = {

@@ -19,7 +19,7 @@ class TripPipeline:
             profile = user_service.get_profile(user_id)
             
         # 2. Parse Query (with profile context)
-        parse_result = await parse_pipeline.execute(text, user_profile=profile)
+        parse_result = await parse_pipeline.execute(text, user_id=user_id)
         entities = parse_result.entities
         
         # 3. Personalization (Rule-based enhancement for fast-path or misses)

@@ -85,7 +85,12 @@ export default function PlanTrip() {
     try {
       const result = await aiApi.parseTrip(aiDescription);
       
-      if (result.destination) setDestination(result.destination);
+      if (result.destination) {
+        // Only overwrite destination if the field is currently empty or if the parsed destination is explicitly requested (not just suggested by AI)
+        if (!destination || !result.destinationIsSuggested) {
+          setDestination(result.destination);
+        }
+      }
       if (result.origin) setOrigin(result.origin);
       if (result.startDate) setStartDate(result.startDate);
       if (result.endDate) setEndDate(result.endDate);
