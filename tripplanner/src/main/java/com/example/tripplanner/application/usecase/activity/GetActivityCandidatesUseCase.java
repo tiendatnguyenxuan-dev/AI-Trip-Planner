@@ -5,7 +5,6 @@ import com.example.tripplanner.application.mapper.TripMapper;
 import com.example.tripplanner.domain.model.Trip;
 import com.example.tripplanner.domain.exception.TripNotFoundException;
 import com.example.tripplanner.domain.port.TripRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -20,7 +19,7 @@ public class GetActivityCandidatesUseCase {
 
     public List<ActivityCandidateResponse> execute(UUID tripId) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new EntityNotFoundException("Trip not found: " + tripId));
+                .orElseThrow(() -> new com.example.tripplanner.domain.exception.TripNotFoundException("Trip not found"));
 
         return trip.getCandidates().stream()
                 .map(TripMapper::toActivityCandidateResponse)
