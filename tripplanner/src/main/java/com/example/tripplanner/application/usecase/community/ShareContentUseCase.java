@@ -57,7 +57,8 @@ public class ShareContentUseCase {
                     .orElseThrow(() -> new RuntimeException("Activity not found"));
         } else if (request.getType() == ShareType.TRIP) {
             Trip trip = tripRepository.findById(request.getRefId())
-                    .orElseThrow(() -> new TripNotFoundException("Trip not found"));
+                    .orElseThrow(
+                            () -> new com.example.tripplanner.domain.exception.TripNotFoundException("Trip not found"));
             if (!trip.getUser().getId().equals(userId)) {
                 throw new RuntimeException("Trip does not belong to user");
             }

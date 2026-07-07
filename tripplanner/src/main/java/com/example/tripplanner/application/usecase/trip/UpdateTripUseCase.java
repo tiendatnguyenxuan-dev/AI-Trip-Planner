@@ -6,7 +6,6 @@ import com.example.tripplanner.application.mapper.TripMapper;
 import com.example.tripplanner.domain.model.Trip;
 import com.example.tripplanner.domain.exception.TripNotFoundException;
 import com.example.tripplanner.domain.port.TripRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +21,7 @@ public class UpdateTripUseCase {
     @Transactional
     public TripResponse execute(UUID tripId, TripUpdateRequest request) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new EntityNotFoundException("Trip not found: " + tripId));
+                .orElseThrow(() -> new com.example.tripplanner.domain.exception.TripNotFoundException("Trip not found"));
 
         if (request.getTitle() != null) trip.setTitle(request.getTitle());
         if (request.getDestination() != null) trip.setDestination(request.getDestination());

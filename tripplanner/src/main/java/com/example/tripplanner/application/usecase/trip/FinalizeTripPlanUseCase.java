@@ -1,11 +1,12 @@
 package com.example.tripplanner.application.usecase.trip;
 
+import com.example.tripplanner.domain.exception.TripNotFoundException;
+
 import com.example.tripplanner.application.dto.trip.FinalizeTripRequest;
 import com.example.tripplanner.application.dto.trip.TripResponse;
 import com.example.tripplanner.application.mapper.TripMapper;
 import com.example.tripplanner.domain.model.*;
 import com.example.tripplanner.domain.port.TripRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ public class FinalizeTripPlanUseCase {
     @Transactional
     public TripResponse execute(UUID tripId, FinalizeTripRequest request) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new EntityNotFoundException("Trip not found: " + tripId));
+                .orElseThrow(() -> new com.example.tripplanner.domain.exception.TripNotFoundException("Trip not found"));
 
         // 1. Filter and mark selected candidates
         List<ActivityCandidate> selectedCandidates = trip.getCandidates().stream()

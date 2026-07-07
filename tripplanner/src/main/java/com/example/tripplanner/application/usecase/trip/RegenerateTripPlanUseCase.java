@@ -10,7 +10,6 @@ import com.example.tripplanner.domain.exception.TripNotFoundException;
 import com.example.tripplanner.domain.model.TripStatus;
 import com.example.tripplanner.domain.port.ItineraryRepository;
 import com.example.tripplanner.domain.port.TripRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +24,11 @@ public class RegenerateTripPlanUseCase {
 
     private final AIOrchestrator orchestrator;
     private final TripRepository tripRepository;
-    private final ItineraryRepository itineraryRepository;
 
     @Transactional
     public GenerateResponse execute(UUID tripId, RegenerateRequest request) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new EntityNotFoundException("Trip not found: " + tripId));
+                .orElseThrow(() -> new com.example.tripplanner.domain.exception.TripNotFoundException("Trip not found"));
 
         trip.getItineraries().clear();
         if (trip.getCandidates() != null) trip.getCandidates().clear();

@@ -9,7 +9,6 @@ import com.example.tripplanner.domain.model.Trip;
 import com.example.tripplanner.domain.exception.TripNotFoundException;
 import com.example.tripplanner.domain.model.TripStatus;
 import com.example.tripplanner.domain.port.TripRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,7 @@ public class GenerateTripPlanUseCase {
     @Transactional
     public GenerateResponse execute(UUID tripId, GenerateRequest request) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new EntityNotFoundException("Trip not found: " + tripId));
+                .orElseThrow(() -> new com.example.tripplanner.domain.exception.TripNotFoundException("Trip not found"));
 
         Long aiLogId = orchestrator.orchestrate(trip, request);
 

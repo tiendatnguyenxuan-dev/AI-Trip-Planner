@@ -1,13 +1,15 @@
 package com.example.tripplanner.application.usecase.ai;
 
+import com.example.tripplanner.domain.exception.TripNotFoundException;
+
 import com.example.tripplanner.application.dto.ai.AiLogPageResponse;
 import com.example.tripplanner.application.dto.ai.AiLogSummaryResponse;
 import com.example.tripplanner.application.mapper.AiLogMapper;
 import com.example.tripplanner.domain.model.AiLog;
+import com.example.tripplanner.domain.model.Trip;
 import com.example.tripplanner.domain.model.AiLogStatus;
 import com.example.tripplanner.domain.port.AiLogRepository;
 import com.example.tripplanner.domain.port.TripRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,9 +27,8 @@ public class GetAiLogsByTripUseCase {
     private final TripRepository tripRepository;
 
     public AiLogPageResponse execute(UUID tripId, String status, int page, int size) {
-        if (!tripRepository.existsById(tripId)) {
-            throw new EntityNotFoundException("Trip not found: " + tripId);
-        }
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new com.example.tripplanner.domain.exception.TripNotFoundException("Trip not found"));
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         String tripIdStr = tripId.toString();
