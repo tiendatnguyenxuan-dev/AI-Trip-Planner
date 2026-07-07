@@ -4,6 +4,7 @@ import com.example.tripplanner.application.dto.community.ShareContentRequest;
 import com.example.tripplanner.application.dto.community.SharedContentResponse;
 import com.example.tripplanner.application.mapper.SharedContentMapper;
 import com.example.tripplanner.domain.exception.AlreadyReviewedException;
+import com.example.tripplanner.domain.exception.TripNotFoundException;
 import com.example.tripplanner.domain.model.*;
 import com.example.tripplanner.domain.port.ActivityRepository;
 import com.example.tripplanner.domain.port.ExploreRepository;
@@ -56,7 +57,7 @@ public class ShareContentUseCase {
                     .orElseThrow(() -> new RuntimeException("Activity not found"));
         } else if (request.getType() == ShareType.TRIP) {
             Trip trip = tripRepository.findById(request.getRefId())
-                    .orElseThrow(() -> new RuntimeException("Trip not found"));
+                    .orElseThrow(() -> new TripNotFoundException("Trip not found"));
             if (!trip.getUser().getId().equals(userId)) {
                 throw new RuntimeException("Trip does not belong to user");
             }
