@@ -8,6 +8,8 @@ import com.example.tripplanner.application.usecase.AdminManagementUseCase;
 import com.example.tripplanner.domain.model.*;
 import com.example.tripplanner.domain.port.SharedContentRepository;
 import com.example.tripplanner.domain.port.UserRepository;
+import com.example.tripplanner.domain.exception.BusinessRuleException;
+import com.example.tripplanner.domain.exception.ResourceNotFoundException;
 import com.example.tripplanner.domain.port.AiLogRepository;
 import com.example.tripplanner.domain.port.ExploreRepository;
 
@@ -51,7 +53,7 @@ public class AdminManagementService implements AdminManagementUseCase {
     @Transactional
     public User updateUserStatus(UUID userId, UserStatus status) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setStatus(status);
         return userRepository.save(user);
     }
@@ -60,10 +62,10 @@ public class AdminManagementService implements AdminManagementUseCase {
     @Transactional
     public void softDeleteUser(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (user.getStatus() != UserStatus.LOCKED) {
-            throw new IllegalStateException("Only LOCKED users can be deleted.");
+            throw new BusinessRuleException("Only LOCKED users can be deleted.");
         }
 
         user.setStatus(UserStatus.DELETED);
@@ -88,7 +90,7 @@ public class AdminManagementService implements AdminManagementUseCase {
     @Transactional
     public SharedContent moderateContent(UUID contentId, ShareStatus status) {
         SharedContent content = sharedContentRepository.findById(contentId)
-                .orElseThrow(() -> new RuntimeException("Content not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Content not found"));
 
         if (status == ShareStatus.REJECTED) {
             sharedContentRepository.deleteById(contentId);
@@ -209,7 +211,7 @@ public class AdminManagementService implements AdminManagementUseCase {
     public ExploreItem updateExploreItem(UUID id, ExploreItem item) {
         log.info("Updating explore item {}", id);
         ExploreItem existing = exploreRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Explore item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Explore item not found"));
         
         // Update fields
         existing.setTitle(item.getTitle());

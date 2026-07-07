@@ -6,6 +6,7 @@ import com.example.tripplanner.application.dto.trip.GenerateResponse;
 import com.example.tripplanner.application.mapper.TripMapper;
 import com.example.tripplanner.application.orchestrator.AIOrchestrator;
 import com.example.tripplanner.domain.model.Trip;
+import com.example.tripplanner.domain.exception.TripNotFoundException;
 import com.example.tripplanner.domain.model.TripStatus;
 import com.example.tripplanner.domain.port.TripRepository;
 import jakarta.persistence.EntityNotFoundException;

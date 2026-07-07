@@ -5,6 +5,7 @@ import com.example.tripplanner.application.dto.auth.LoginRequest;
 import com.example.tripplanner.application.dto.auth.UserResponse;
 import com.example.tripplanner.application.security.PasswordEncoder;
 import com.example.tripplanner.application.security.TokenProvider;
+import com.example.tripplanner.domain.exception.UnauthorizedException;
 import com.example.tripplanner.domain.model.User;
 import com.example.tripplanner.domain.port.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,10 @@ public class LoginUseCase {
 
     public AuthResponse execute(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+            throw new UnauthorizedException("Invalid email or password");
         }
 
         String token = tokenProvider.generateToken(user.getId(), user.getRole());

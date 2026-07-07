@@ -4,6 +4,7 @@ import com.example.tripplanner.application.dto.auth.AuthResponse;
 import com.example.tripplanner.application.dto.auth.RegisterRequest;
 import com.example.tripplanner.application.dto.auth.UserResponse;
 import com.example.tripplanner.application.security.PasswordEncoder;
+import com.example.tripplanner.domain.exception.DuplicateEmailException;
 import com.example.tripplanner.domain.model.Role;
 import com.example.tripplanner.domain.model.User;
 import com.example.tripplanner.domain.port.UserRepository;
@@ -23,7 +24,7 @@ public class RegisterUserUseCase {
     @Transactional
     public UserResponse execute(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("User already exists with email: " + request.getEmail());
+            throw new DuplicateEmailException("User already exists with email: " + request.getEmail());
         }
 
         User user = User.builder()
