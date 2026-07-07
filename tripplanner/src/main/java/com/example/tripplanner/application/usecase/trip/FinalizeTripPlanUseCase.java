@@ -1,6 +1,5 @@
 package com.example.tripplanner.application.usecase.trip;
 
-import com.example.tripplanner.domain.exception.TripNotFoundException;
 
 import com.example.tripplanner.application.dto.trip.FinalizeTripRequest;
 import com.example.tripplanner.application.dto.trip.TripResponse;

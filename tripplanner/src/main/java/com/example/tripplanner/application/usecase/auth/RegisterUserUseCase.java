@@ -1,6 +1,5 @@
 package com.example.tripplanner.application.usecase.auth;
 
-import com.example.tripplanner.application.dto.auth.AuthResponse;
 import com.example.tripplanner.application.dto.auth.RegisterRequest;
 import com.example.tripplanner.application.dto.auth.UserResponse;
 import com.example.tripplanner.application.security.PasswordEncoder;
