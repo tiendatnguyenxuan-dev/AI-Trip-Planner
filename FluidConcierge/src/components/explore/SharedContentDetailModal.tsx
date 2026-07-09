@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { communityApi } from '../../services/api';
@@ -21,7 +23,6 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
   onUpvote
 }) => {
   const navigate = useNavigate();
-  const [comments, setComments] = useState<CommentResponse[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -46,32 +47,31 @@ const SharedContentDetailModal: React.FC<SharedContentDetailModalProps> = ({
     }
   }, [isConnected, item?.id, subscribe]);
 
-  useEffect(() => {
-    if (isOpen && item) {
-      loadComments();
-    }
-  }, [isOpen, item]);
+  const { data: comments = [], refetch: refetchComments, isError } = useQuery({
+    queryKey: ['comments', item?.id],
+    queryFn: () => communityApi.getComments(item!.id),
+    enabled: isOpen && !!item?.id,
+  });
 
-  const loadComments = async () => {
-    if (!item) return;
-    try {
-      const data = await communityApi.getComments(item.id);
-      setComments(data);
-    } catch (error) {
-      console.error('Failed to load comments', error);
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to load comments');
     }
-  };
+  }, [isError]);
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!item || !newComment.trim()) return;
     setLoading(true);
+    const toastId = toast.loading('Adding comment...');
     try {
-      const added = await communityApi.addComment(item.id, newComment.trim());
-      setComments([...comments, added]);
+      await communityApi.addComment(item.id, newComment.trim());
+      await refetchComments();
       setNewComment('');
+      toast.success('Comment added successfully', { id: toastId });
     } catch (error) {
       console.error('Failed to add comment', error);
+      toast.error('Failed to add comment', { id: toastId });
     } finally {
       setLoading(false);
     }

@@ -1,62 +1,58 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { adminApi } from '../../services/api';
 import type { AdminUserResponse, SharedContentResponse } from '../../types/trip';
 
 export default function Users() {
-  const [users, setUsers] = useState<AdminUserResponse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'LOCKED'>('ALL');
   const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
   const [userReviews, setUserReviews] = useState<SharedContentResponse[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const { data: users = [], isLoading: loading, isError, refetch } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: adminApi.getUsers,
+  });
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await adminApi.getUsers();
-      setUsers(data);
-    } catch (error: any) {
-      console.error('Failed to fetch users:', error);
-      if (error.response?.status === 403) {
-        alert('Access Denied: You must be logged in as an Admin to view this data.');
-      } else {
-        alert('Failed to connect to server. Please ensure the backend is running.');
-      }
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to load users');
     }
-  };
+  }, [isError]);
 
   const handleLock = async (id: string) => {
+    const toastId = toast.loading('Locking user...');
     try {
       await adminApi.lockUser(id);
-      fetchUsers();
+      await refetch();
+      toast.success('User locked successfully', { id: toastId });
     } catch (error) {
-      alert('Failed to lock user');
+      toast.error('Failed to lock user', { id: toastId });
     }
   };
 
   const handleUnlock = async (id: string) => {
+    const toastId = toast.loading('Unlocking user...');
     try {
       await adminApi.unlockUser(id);
-      fetchUsers();
+      await refetch();
+      toast.success('User unlocked successfully', { id: toastId });
     } catch (error) {
-      alert('Failed to unlock user');
+      toast.error('Failed to unlock user', { id: toastId });
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    const toastId = toast.loading('Deleting user...');
     try {
       await adminApi.deleteUser(id);
-      fetchUsers();
+      await refetch();
+      toast.success('User deleted successfully', { id: toastId });
     } catch (error) {
-      alert('Failed to delete user. Make sure the user is locked first.');
+      toast.error('Failed to delete user. Make sure the user is locked first.', { id: toastId });
     }
   };
 

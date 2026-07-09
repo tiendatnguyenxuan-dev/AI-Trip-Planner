@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
 import { exploreApi, communityApi, tripApi, experienceApi } from '../services/api';
 import type { SharedContentResponse, ExploreItem, TripResponse } from '../types/trip';
-import { useAuth } from '../context/AuthContext';
 import ShareModal from '../components/ShareModal';
 import ExploreCard from '../components/explore/ExploreCard';
 import FilterBar from '../components/explore/FilterBar';
@@ -25,12 +26,7 @@ const ALL_TAGS = ['Chill', 'Nature', 'Thư giãn', 'Adventure', 'Phiêu lưu', '
 
 const Explore: React.FC = () => {
   const navigate = useNavigate();
-  const [trendingTrips, setTrendingTrips] = useState<SharedContentResponse[]>([]);
-  const [hotActivities, setHotActivities] = useState<SharedContentResponse[]>([]);
-  const [allItems, setAllItems] = useState<ExploreItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const [userTrips, setUserTrips] = useState<TripResponse[]>([]);
   const [isTripSelectorOpen, setIsTripSelectorOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedTripToShare, setSelectedTripToShare] = useState<TripResponse | null>(null);
@@ -67,32 +63,42 @@ const Explore: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [tripsRes, actsRes, allRes] = await Promise.all([
-          communityApi.getTrending('TRIP', 6),
-          communityApi.getTrending('ACTIVITY', 6),
-          exploreApi.getAll({ page: 0, size: 50 })
-        ]);
-        setTrendingTrips(tripsRes);
-        setHotActivities(actsRes);
-        setAllItems(allRes.content);
-      } catch (error) {
-        console.error('Failed to fetch explore data', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const [trendingTrips, setTrendingTrips] = useState<SharedContentResponse[]>([]);
+  const [hotActivities, setHotActivities] = useState<SharedContentResponse[]>([]);
+  const [allItems, setAllItems] = useState<ExploreItem[]>([]);
+
+  const { data: exploreData, isLoading: loading, isError } = useQuery({
+    queryKey: ['explore-data'],
+    queryFn: async () => {
+      const [tripsRes, actsRes, allRes] = await Promise.all([
+        communityApi.getTrending('TRIP', 6),
+        communityApi.getTrending('ACTIVITY', 6),
+        exploreApi.getAll({ page: 0, size: 50 })
+      ]);
+      return { trendingTrips: tripsRes, hotActivities: actsRes, allItems: allRes.content };
+    },
+  });
 
   useEffect(() => {
-    if (user?.id) {
-      tripApi.getAll(user.id).then(setUserTrips).catch(console.error);
+    if (exploreData) {
+      setTrendingTrips(exploreData.trendingTrips);
+      setHotActivities(exploreData.hotActivities);
+      setAllItems(exploreData.allItems);
     }
-  }, [user?.id]);
+  }, [exploreData]);
+
+  useEffect(() => {
+    console.log('React Query Explore State - isError:', isError, 'loading:', loading, 'exploreData:', exploreData);
+    if (isError) {
+      toast.error('Không thể tải dữ liệu khám phá. Vui lòng thử lại!');
+    }
+  }, [isError, loading, exploreData]);
+
+  const { data: userTrips = [] } = useQuery({
+    queryKey: ['trips', user?.id],
+    queryFn: () => tripApi.getAll(user!.id),
+    enabled: !!user?.id,
+  });
 
   const handlePlan = (item: ExploreItem) => {
     navigate('/plan', {
