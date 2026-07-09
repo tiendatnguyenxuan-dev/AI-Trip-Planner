@@ -48,6 +48,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       # Database
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-trip}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -56,6 +58,9 @@ services:
       # JPA
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
+      # Redis Session Store
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       # Server
       SERVER_PORT: 8090
       # AI Service
@@ -77,6 +82,23 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+
+  # ─────────────────────────────────────────
+  # ⚡ Redis Session Store
+  # ─────────────────────────────────────────
+  redis:
+    image: redis:7.0-alpine
+    container_name: tripplanner-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - tripplanner-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ─────────────────────────────────────────
   # 🐍 Python AI Service (FastAPI)

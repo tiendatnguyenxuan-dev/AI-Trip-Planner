@@ -24,6 +24,12 @@ spring:
         type:
           preferred_uuid_jdbc_type: CHAR
   
+  # ⚡ Redis Configuration
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+  
 server:
   port: 8090
 
@@ -34,3 +40,12 @@ router9:
 
 ai-service:
   url: http://localhost:8000/ai
+
+# 🛡️ App JWT Security Configuration
+app:
+  jwt:
+    secret: ${JWT_ACCESS_SECRET:very-long-secret-key-that-must-be-at-least-32-characters-long-access-key}
+    expiration: ${JWT_ACCESS_EXPIRATION:600000} # 10 minutes (600,000 ms)
+  refresh:
+    secret: ${JWT_REFRESH_SECRET:another-very-long-secret-key-that-must-be-at-least-32-characters-long-refresh-key}
+    expiration: ${JWT_REFRESH_EXPIRATION:2592000000} # 30 days (2,592,000,000 ms)

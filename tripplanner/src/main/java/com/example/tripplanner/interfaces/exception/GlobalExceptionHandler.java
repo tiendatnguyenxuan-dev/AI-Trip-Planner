@@ -6,6 +6,10 @@ import com.example.tripplanner.domain.exception.AlreadyReviewedException;
 import com.example.tripplanner.domain.exception.BusinessRuleException;
 import com.example.tripplanner.domain.exception.ResourceNotFoundException;
 import com.example.tripplanner.domain.exception.UnauthorizedException;
+import com.example.tripplanner.domain.exception.InvalidRefreshTokenException;
+import com.example.tripplanner.domain.exception.ExpiredRefreshTokenException;
+import com.example.tripplanner.domain.exception.SessionNotFoundException;
+import com.example.tripplanner.domain.exception.RefreshTokenReuseDetectedException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +56,20 @@ public class GlobalExceptionHandler {
         log.warn("UnauthorizedException at {}: {}", request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.name(), ex.getMessage(), request.getRequestURI(), generateTraceId(), null));
+    }
+
+    @ExceptionHandler({InvalidRefreshTokenException.class, ExpiredRefreshTokenException.class, SessionNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleRefreshTokenErrors(RuntimeException ex, HttpServletRequest request) {
+        log.warn("Refresh Token Error at {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.name(), ex.getMessage(), request.getRequestURI(), generateTraceId(), null));
+    }
+
+    @ExceptionHandler(RefreshTokenReuseDetectedException.class)
+    public ResponseEntity<ErrorResponse> handleRefreshTokenReuse(RefreshTokenReuseDetectedException ex, HttpServletRequest request) {
+        log.error("CRITICAL: Refresh Token Reuse Detected at {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of(HttpStatus.FORBIDDEN.value(), HttpStatus.FORBIDDEN.name(), ex.getMessage(), request.getRequestURI(), generateTraceId(), null));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
