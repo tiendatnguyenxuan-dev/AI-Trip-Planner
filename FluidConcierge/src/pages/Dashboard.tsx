@@ -6,61 +6,11 @@ import { tripApi } from '../services/api';
 import type { TripResponse } from '../types/trip';
 import { useAuth } from '../context/AuthContext';
 import ShareModal from '../components/ShareModal';
+import { STATUS_LABELS, STATUS_CLASS } from '../constants';
+import { calcDays } from '../utils/date';
+import { getImageForDestination } from '../utils/helper';
 
-const STATUS_LABELS: Record<string, string> = {
-  PLANNING: 'Đang lên kế hoạch',
-  GENERATED: 'Đã tạo',
-  CONFIRMED: 'Đã xác nhận',
-};
-
-const STATUS_CLASS: Record<string, string> = {
-  PLANNING: 'bg-primary/10 text-primary',
-  GENERATED: 'bg-cta/10 text-cta',
-  CONFIRMED: 'bg-primary text-white',
-};
-
-const DESTINATION_IMAGES: Record<string, string> = {
-  'hội an': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Hoi_An_Covered_Bridge.jpg/640px-Hoi_An_Covered_Bridge.jpg',
-  'đà lạt': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Da_Lat_panorama.jpg/640px-Da_Lat_panorama.jpg',
-  'phú quốc': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Phu_Quoc_island.jpg/640px-Phu_Quoc_island.jpg',
-  'hạ long': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Ha_Long_Bay_Junk_Boat.jpg/640px-Ha_Long_Bay_Junk_Boat.jpg',
-  'đà nẵng': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Da_Nang_City.jpg/640px-Da_Nang_City.jpg',
-};
-
-function getImageForDestination(destination: string): string {
-  const lower = destination.toLowerCase();
-  for (const [key, url] of Object.entries(DESTINATION_IMAGES)) {
-    if (lower.includes(key)) return url;
-  }
-  return `https://lh3.googleusercontent.com/aida-public/AB6AXuBkF-Z9gpc6o79QSRGm32SxyoZBR7JyAbmNWxoTWjCJ1fTz5KVKLRb14R2QA63E3vn1ZYWQdSDmLrYkuewfIVcLNaeMgZ3QaQsEjwT_8sincE_c-7hdsP-qRFb_5CagNcDg8ttX72r-91tertmOLxucSUsyjSaA3nkY-s4jAbdct5jpZLIqLTfdHbxICREIKgzFoevx_2EUIAPHsOe7NapW2-2j6j0si1MNiuB28eDZdWM6LRemZfI-U4fDVrhnSWu24LN8Jy6w6hc`;
-}
-
-
-
-function calcDays(start: string, end: string): number {
-  const s = new Date(start);
-  const e = new Date(end);
-  // Reset hours to midnight to compare only dates
-  s.setHours(0, 0, 0, 0);
-  e.setHours(0, 0, 0, 0);
-  const diffTime = Math.abs(e.getTime() - s.getTime());
-  return Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
-}
-
-// ── Skeleton loader ─────────────────────────────────────────────────────────
-
-function TripCardSkeleton() {
-  return (
-    <div className="bg-surface rounded-3xl overflow-hidden animate-pulse shadow-md">
-      <div className="h-64 bg-primary/5"></div>
-      <div className="p-6 space-y-3">
-        <div className="h-5 bg-primary/5 rounded w-3/4"></div>
-        <div className="h-4 bg-primary/5 rounded w-full"></div>
-        <div className="h-4 bg-primary/5 rounded w-2/3"></div>
-      </div>
-    </div>
-  );
-}
+import TripCardSkeleton from '../components/dashboard/TripCardSkeleton';
 
 // ── Main component ──────────────────────────────────────────────────────────
 

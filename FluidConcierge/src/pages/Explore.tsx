@@ -16,13 +16,7 @@ import SharedContentDetailModal from '../components/explore/SharedContentDetailM
 import ExploreDetailModal from '../components/explore/ExploreDetailModal';
 import ImageLightbox from '../components/explore/ImageLightbox';
 
-// Import hero images from src/assets
-import dalatImg from '../assets/dalat.jpg';
-import danangImg from '../assets/danang.jpg';
-import halongImg from '../assets/halong.jpg';
-import sapaImg from '../assets/sapa.jpg';
-
-const ALL_TAGS = ['Chill', 'Nature', 'Thư giãn', 'Adventure', 'Phiêu lưu', 'Luxury', 'Beach', 'Family', 'Modern', 'Văn hóa', 'History', 'Food', 'Ẩm thực'];
+import { ALL_TAGS, HERO_BGS } from '../constants';
 
 const Explore: React.FC = () => {
   const navigate = useNavigate();
@@ -36,7 +30,6 @@ const Explore: React.FC = () => {
   const [duration, setDuration] = useState<number | null>(null);
   const [currentHeroBg, setCurrentHeroBg] = useState(0);
 
-
   const [selectedDetailItem, setSelectedDetailItem] = useState<SharedContentResponse | null>(null);
   const [selectedExploreItem, setSelectedExploreItem] = useState<ExploreItem | null>(null);
   const [showComingSoon, setShowComingSoon] = useState(false);
@@ -44,17 +37,6 @@ const Explore: React.FC = () => {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
-
-  const HERO_BGS = [
-    '/assets/explore/hanoi_culture.png',
-    danangImg,
-    '/assets/explore/phuquoc_luxury.png',
-    dalatImg,
-    halongImg,
-    sapaImg,
-    '/assets/explore/danang_modern.png',
-    '/assets/explore/dalat_adventure.png'
-  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
