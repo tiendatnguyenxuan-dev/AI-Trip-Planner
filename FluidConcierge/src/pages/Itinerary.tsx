@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { tripApi, itineraryApi, activityApi } from '../services/api';
-import type { TripResponse, ItineraryResponse, ActivityResponse } from '../types/trip';
+import type { ItineraryResponse, ActivityResponse } from '../types/trip';
 import { useAuth } from '../context/AuthContext';
 import EditActivityModal from '../components/EditActivityModal';
 import ShareModal from '../components/ShareModal';
@@ -287,11 +287,11 @@ export default function Itinerary() {
     onMutate: () => {
       return toast.loading('Đang tạo lại lịch trình...');
     },
-    onSuccess: (resData, variables, context) => {
+    onSuccess: (_, __, context) => {
       refetch();
       toast.success('Tạo lại lịch trình thành công!', { id: context });
     },
-    onError: (err, variables, context) => {
+    onError: (_, __, context) => {
       toast.error('Không thể tạo lại lịch trình.', { id: context });
     }
   });

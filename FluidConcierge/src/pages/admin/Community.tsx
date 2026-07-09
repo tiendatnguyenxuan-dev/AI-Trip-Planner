@@ -10,7 +10,7 @@ export default function Community() {
   const [trendingTrips, setTrendingTrips] = useState<SharedContentResponse[]>([]);
   const [, setTrendingActivities] = useState<SharedContentResponse[]>([]);
   const [topContributors, setTopContributors] = useState<any[]>([]);
-  const [archivedCount, setArchivedCount] = useState(0);
+  const [, setArchivedCount] = useState(0);
 
   const { data, isLoading: loading, isError } = useQuery({
     queryKey: ['admin-community-moderation'],

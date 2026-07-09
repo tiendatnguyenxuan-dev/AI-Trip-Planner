@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { tripApi } from '../services/api';
-import type { TripResponse, ActivityCandidateResponse } from '../types/trip';
 
 const ActivitySelection: React.FC = () => {
   const { id } = useParams<{ id: string }>();

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { communityApi } from '../../services/api';
-import type { ExploreItem, SharedContentResponse } from '../../types/trip';
+import type { ExploreItem } from '../../types/trip';
 import CommunityActivityCard from './CommunityActivityCard';
 import ShareModal from '../ShareModal';
 import ImageLightbox from './ImageLightbox';

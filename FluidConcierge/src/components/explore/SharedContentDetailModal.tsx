@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { communityApi } from '../../services/api';
-import type { SharedContentResponse, CommentResponse } from '../../types/trip';
+import type { SharedContentResponse } from '../../types/trip';
 import ImageCarousel from './ImageCarousel';
 import ImageLightbox from './ImageLightbox';
 import { useWebSocket } from '../../hooks/useWebSocket.tsx';
