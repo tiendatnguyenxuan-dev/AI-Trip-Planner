@@ -1,39 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { tripApi } from '../services/api';
-import type { TripResponse, ActivityCandidateResponse } from '../types/trip';
 
 const ActivitySelection: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [trip, setTrip] = useState<TripResponse | null>(null);
-  const [candidates, setCandidates] = useState<ActivityCandidateResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [finalizing, setFinalizing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [finalizing, setFinalizing] = useState(false);
+
+  const { data, isLoading: loading, isError, refetch } = useQuery({
+    queryKey: ['activity-selection', id],
+    queryFn: async () => {
+      if (!id) throw new Error('No trip ID');
+      const [tripData, candidateData] = await Promise.all([
+        tripApi.getById(id),
+        tripApi.getCandidates(id)
+      ]);
+      return { trip: tripData, candidates: candidateData };
+    },
+    enabled: !!id,
+  });
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-      try {
-        const [tripData, candidateData] = await Promise.all([
-          tripApi.getById(id),
-          tripApi.getCandidates(id)
-        ]);
-        setTrip(tripData);
-        setCandidates(candidateData);
-        // Initially none selected or based on backend if we decide to persist partial selections
-        const initialSelected = new Set(candidateData.filter(c => c.selected).map(c => c.id));
-        setSelectedIds(initialSelected);
-      } catch (error) {
-        console.error('Failed to fetch selection data', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [id]);
+    if (data?.candidates) {
+      const initialSelected = new Set(
+        data.candidates.filter(c => c.selected).map(c => c.id)
+      );
+      setSelectedIds(initialSelected);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (isError) {
+      toast.error('Không thể tải dữ liệu hoạt động. Vui lòng thử lại!');
+    }
+  }, [isError]);
+
+  const trip = data?.trip ?? null;
+  const candidates = data?.candidates ?? [];
 
   const toggleSelection = (candidateId: string) => {
     setSelectedIds(prev => {
@@ -50,9 +57,8 @@ const ActivitySelection: React.FC = () => {
     try {
       await tripApi.finalize(id, Array.from(selectedIds));
       navigate(`/itinerary/${id}`);
-    } catch (error) {
-      console.error('Finalize failed', error);
-      alert('Có lỗi xảy ra khi hoàn thiện lịch trình. Thử lại sau nhé!');
+    } catch {
+      toast.error('Có lỗi xảy ra khi hoàn thiện lịch trình. Thử lại sau nhé!');
     } finally {
       setFinalizing(false);
     }
@@ -113,20 +119,18 @@ const ActivitySelection: React.FC = () => {
             <button
               onClick={async () => {
                 if (!id) return;
-                setLoading(true);
+                const toastId = toast.loading('Đang tạo lại danh sách gợi ý...');
                 try {
                   await tripApi.generate(id, { language: 'Vietnamese' });
-                  const freshCandidates = await tripApi.getCandidates(id);
-                  setCandidates(freshCandidates);
+                  await refetch();
                   setSelectedIds(new Set());
+                  toast.success('Tạo lại danh sách gợi ý thành công!', { id: toastId });
                 } catch (e) {
                   console.error(e);
-                  alert('Không thể tạo lại danh sách. Thử lại sau nhé!');
-                } finally {
-                  setLoading(false);
+                  toast.error('Không thể tạo lại danh sách. Thử lại sau nhé!', { id: toastId });
                 }
               }}
-              className="flex items-center gap-2 text-emerald-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
+              className="flex items-center gap-2 text-emerald-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest cursor-pointer"
             >
               <span className="material-symbols-outlined text-sm">refresh</span>
               Tạo lại danh sách gợi ý

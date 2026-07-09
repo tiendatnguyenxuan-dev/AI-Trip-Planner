@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { communityApi, adminApi } from '../../services/api';
 import type { SharedContentResponse } from '../../types/trip';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,69 +10,58 @@ export default function Community() {
   const [trendingTrips, setTrendingTrips] = useState<SharedContentResponse[]>([]);
   const [, setTrendingActivities] = useState<SharedContentResponse[]>([]);
   const [topContributors, setTopContributors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [, setArchivedCount] = useState(0);
 
-  useEffect(() => {
-    Promise.all([
-      fetchPending(),
-      fetchTrending(),
-      fetchContributors()
-    ]);
-  }, []);
-
-  const fetchContributors = async () => {
-    try {
-      const data = await adminApi.getTopContributors(5);
-      setTopContributors(data);
-    } catch (error) {
-      console.error('Failed to fetch contributors:', error);
-    }
-  };
-
-  const fetchTrending = async () => { 
-    try {
-      const [trips, activities] = await Promise.all([
+  const { data, isLoading: loading, isError } = useQuery({
+    queryKey: ['admin-community-moderation'],
+    queryFn: async () => {
+      const [pending, trips, activities, contributors] = await Promise.all([
+        adminApi.getPendingContent(),
         communityApi.getTrending('TRIP', 1),
-        communityApi.getTrending('ACTIVITY', 1)
+        communityApi.getTrending('ACTIVITY', 1),
+        adminApi.getTopContributors(5),
       ]);
-      setTrendingTrips(trips);
-      setTrendingActivities(activities);
-    } catch (error) {
-      console.error('Failed to fetch trending data:', error);
-    }
-  };
+      return { pending, trendingTrips: trips, trendingActivities: activities, topContributors: contributors };
+    },
+  });
 
-  const fetchPending = async () => {
-    try {
-      setLoading(true);
-      const data = await adminApi.getPendingContent();
-      setPendingItems(data);
-    } catch (error) {
-      console.error('Failed to fetch pending content:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (data) {
+      setPendingItems(data.pending);
+      setTrendingTrips(data.trendingTrips);
+      setTrendingActivities(data.trendingActivities);
+      setTopContributors(data.topContributors);
     }
-  };
+  }, [data]);
+
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to load moderation queue');
+    }
+  }, [isError]);
 
   const handleApprove = async (id: string) => {
+    const toastId = toast.loading('Phê duyệt bài viết...');
     try {
       await adminApi.approveContent(id);
       setPendingItems(prev => prev.filter(item => item.id !== id));
       setArchivedCount(prev => prev + 1);
+      toast.success('Phê duyệt thành công!', { id: toastId });
     } catch (error) {
-      alert('Phê duyệt thất bại');
+      toast.error('Phê duyệt thất bại', { id: toastId });
     }
   };
 
   const handleReject = async (id: string) => {
     if (!window.confirm('Bạn có chắc chắn muốn từ chối bài viết này?')) return;
+    const toastId = toast.loading('Đang từ chối bài viết...');
     try {
       await adminApi.rejectContent(id);
       setPendingItems(prev => prev.filter(item => item.id !== id));
       setArchivedCount(prev => prev + 1);
+      toast.success('Đã từ chối bài viết!', { id: toastId });
     } catch (error) {
-      alert('Từ chối thất bại');
+      toast.error('Từ chối thất bại', { id: toastId });
     }
   };
 

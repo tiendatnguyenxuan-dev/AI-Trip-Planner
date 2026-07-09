@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { communityApi } from '../../services/api';
-import type { ExploreItem, SharedContentResponse } from '../../types/trip';
+import type { ExploreItem } from '../../types/trip';
 import CommunityActivityCard from './CommunityActivityCard';
 import ShareModal from '../ShareModal';
 import ImageLightbox from './ImageLightbox';
@@ -15,22 +17,22 @@ interface Props {
 }
 
 const ExploreDetailModal: React.FC<Props> = ({ isOpen, onClose, exploreItem, onPlan, onUpvote }) => {
-  const [reviews, setReviews] = useState<SharedContentResponse[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
 
+  const { data: reviews = [], isLoading: loading, isError, refetch } = useQuery({
+    queryKey: ['explore-item-reviews', exploreItem?.id],
+    queryFn: () => communityApi.getExploreItemReviews(exploreItem!.id),
+    enabled: isOpen && !!exploreItem?.id,
+  });
+
   useEffect(() => {
-    if (isOpen && exploreItem) {
-      setLoading(true);
-      communityApi.getExploreItemReviews(exploreItem.id)
-        .then(res => setReviews(res))
-        .catch(err => console.error("Failed to load reviews", err))
-        .finally(() => setLoading(false));
+    if (isError) {
+      toast.error('Failed to load reviews');
     }
-  }, [isOpen, exploreItem]);
+  }, [isError]);
 
   if (!isOpen || !exploreItem) return null;
 
@@ -194,7 +196,7 @@ const ExploreDetailModal: React.FC<Props> = ({ isOpen, onClose, exploreItem, onP
           onSuccess={() => {
             setIsShareModalOpen(false);
             // Refresh reviews
-            communityApi.getExploreItemReviews(exploreItem.id).then(setReviews);
+            refetch();
           }}
         />
 

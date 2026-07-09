@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { adminApi } from '../../services/api';
 import type { ExploreItem } from '../../types/trip';
 
 export default function Places() {
-  const [places, setPlaces] = useState<ExploreItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlace, setEditingPlace] = useState<ExploreItem | null>(null);
@@ -21,24 +21,16 @@ export default function Places() {
     popularityScore: 5.0
   });
 
-  useEffect(() => {
-    fetchPlaces();
-  }, []);
+  const { data: places = [], isLoading: loading, isError, refetch } = useQuery({
+    queryKey: ['admin-places'],
+    queryFn: adminApi.getPlaces,
+  });
 
-  const fetchPlaces = async () => {
-    try {
-      setLoading(true);
-      const data = await adminApi.getPlaces();
-      setPlaces(data);
-    } catch (error: any) {
-      console.error('Failed to fetch places:', error);
-      if (error.response?.status === 403) {
-        alert('Access Denied: You must be logged in as an Admin.');
-      }
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to fetch places');
     }
-  };
+  }, [isError]);
 
   const handleOpenCreate = () => {
     setEditingPlace(null);
@@ -81,29 +73,32 @@ export default function Places() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this place?')) return;
+    const toastId = toast.loading('Deleting place...');
     try {
       await adminApi.deletePlace(id);
-      setPlaces(prev => prev.filter(p => p.id !== id));
+      await refetch();
+      toast.success('Place deleted successfully', { id: toastId });
     } catch (error) {
       console.error('Failed to delete place:', error);
-      alert('Failed to delete place');
+      toast.error('Failed to delete place', { id: toastId });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const toastId = toast.loading(editingPlace ? 'Updating place...' : 'Creating place...');
     try {
       if (editingPlace) {
-        const updated = await adminApi.updatePlace(editingPlace.id, formData);
-        setPlaces(prev => prev.map(p => p.id === editingPlace.id ? updated : p));
+        await adminApi.updatePlace(editingPlace.id, formData);
       } else {
-        const created = await adminApi.createPlace(formData);
-        setPlaces(prev => [created, ...prev]);
+        await adminApi.createPlace(formData);
       }
+      await refetch();
       setIsModalOpen(false);
+      toast.success(editingPlace ? 'Place updated successfully' : 'Place created successfully', { id: toastId });
     } catch (error) {
       console.error('Failed to save place:', error);
-      alert('Failed to save place');
+      toast.error('Failed to save place', { id: toastId });
     }
   };
 

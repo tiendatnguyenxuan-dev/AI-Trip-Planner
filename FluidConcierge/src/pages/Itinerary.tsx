@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { tripApi, itineraryApi, activityApi } from '../services/api';
-import type { TripResponse, ItineraryResponse, ActivityResponse } from '../types/trip';
+import type { ItineraryResponse, ActivityResponse } from '../types/trip';
 import { useAuth } from '../context/AuthContext';
 import EditActivityModal from '../components/EditActivityModal';
 import ShareModal from '../components/ShareModal';
@@ -243,12 +245,6 @@ export default function Itinerary() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [trip, setTrip] = useState<TripResponse | null>(null);
-  const [itineraries, setItineraries] = useState<ItineraryResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isRegenerating, setIsRegenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   // Edit modal state
   const [editingActivity, setEditingActivity] = useState<ActivityResponse | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -263,50 +259,51 @@ export default function Itinerary() {
     subtitle?: string;
   } | null>(null);
 
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ['itinerary', tripId],
+    queryFn: async () => {
+      if (!tripId) throw new Error('No trip ID');
+      const [tripData, itineraryData] = await Promise.all([
+        tripApi.getById(tripId),
+        itineraryApi.getByTrip(tripId),
+      ]);
+      return { trip: tripData, itineraries: itineraryData };
+    },
+    enabled: !!tripId,
+    refetchInterval: (query) => {
+      const trip = query.state.data?.trip;
+      return trip?.status === 'GENERATING' ? 3000 : false;
+    }
+  });
+
+  const trip = data?.trip ?? null;
+  const itineraries = data?.itineraries ?? [];
+
+  const regenerateMutation = useMutation({
+    mutationFn: async () => {
+      if (!tripId) return;
+      return tripApi.regenerate(tripId, { feedback: 'Vui lòng tạo lại lịch trình với gợi ý mới.', language: 'Vietnamese' });
+    },
+    onMutate: () => {
+      return toast.loading('Đang tạo lại lịch trình...');
+    },
+    onSuccess: (_, __, context) => {
+      refetch();
+      toast.success('Tạo lại lịch trình thành công!', { id: context });
+    },
+    onError: (_, __, context) => {
+      toast.error('Không thể tạo lại lịch trình.', { id: context });
+    }
+  });
+
+  const isRegenerating = regenerateMutation.isPending;
+
+  // Redirect to selection if status is SELECTING_ACTIVITIES
   useEffect(() => {
-    if (!tripId) return;
-    let interval: ReturnType<typeof setInterval>;
-
-    const fetchData = async () => {
-      try {
-        const [tripData, itineraryData] = await Promise.all([
-          tripApi.getById(tripId),
-          itineraryApi.getByTrip(tripId),
-        ]);
-        setTrip(tripData);
-        setItineraries(itineraryData);
-
-        // Redirect to selection if status is SELECTING_ACTIVITIES
-        if (tripData.status === 'SELECTING_ACTIVITIES') {
-          navigate(`/selection/${tripId}`);
-          return;
-        }
-
-        // Poll while still GENERATING
-        if (tripData.status === 'GENERATING') {
-          interval = setInterval(async () => {
-            const refreshed = await tripApi.getById(tripId);
-            setTrip(refreshed);
-            if (refreshed.status === 'SELECTING_ACTIVITIES') {
-              clearInterval(interval);
-              navigate(`/selection/${tripId}`);
-            } else if (refreshed.status !== 'GENERATING') {
-              clearInterval(interval);
-              const freshItineraries = await itineraryApi.getByTrip(tripId);
-              setItineraries(freshItineraries);
-            }
-          }, 3000);
-        }
-      } catch {
-        setError('Không thể tải dữ liệu lịch trình. Vui lòng thử lại.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    return () => clearInterval(interval);
-  }, [tripId]);
+    if (trip?.status === 'SELECTING_ACTIVITIES' && tripId) {
+      navigate(`/selection/${tripId}`);
+    }
+  }, [trip?.status, tripId, navigate]);
 
   // Warn user if they try to leave while generating
   useEffect(() => {
@@ -322,18 +319,8 @@ export default function Itinerary() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [trip?.status, isRegenerating]);
 
-  const handleRegenerate = async () => {
-    if (!tripId) return;
-    setIsRegenerating(true);
-    try {
-      await tripApi.regenerate(tripId, { feedback: 'Vui lòng tạo lại lịch trình với gợi ý mới.', language: 'Vietnamese' });
-      const freshItineraries = await itineraryApi.getByTrip(tripId);
-      setItineraries(freshItineraries);
-    } catch {
-      setError('Không thể tạo lại lịch trình.');
-    } finally {
-      setIsRegenerating(false);
-    }
+  const handleRegenerate = () => {
+    regenerateMutation.mutate();
   };
 
   const handleEditActivity = (activity: ActivityResponse) => {
@@ -370,47 +357,48 @@ export default function Itinerary() {
 
   const handleDeleteActivity = async (activityId: string, itineraryId: string) => {
     if (!confirm('Bạn có chắc muốn xóa hoạt động này?')) return;
+    const toastId = toast.loading('Đang xóa hoạt động...');
     try {
       await activityApi.delete(itineraryId, activityId);
-      const freshItineraries = await itineraryApi.getByTrip(tripId!);
-      setItineraries(freshItineraries);
+      await refetch();
+      toast.success('Xóa hoạt động thành công!', { id: toastId });
     } catch {
-      setError('Không thể xóa hoạt động.');
+      toast.error('Không thể xóa hoạt động.', { id: toastId });
     }
   };
 
   const handleSaveActivity = async () => {
     if (!tripId) return;
-    const freshItineraries = await itineraryApi.getByTrip(tripId);
-    setItineraries(freshItineraries);
+    await refetch();
     setIsEditModalOpen(false);
   };
 
   const handleRegenerateDay = async (itineraryId: string) => {
     if (!confirm('Tạo lại ngày này? Các hoạt động hiện tại sẽ bị thay thế.')) return;
     if (!tripId) return;
+    const toastId = toast.loading('Đang tạo lại hoạt động cho ngày này...');
     try {
       await itineraryApi.regenerateDay(tripId, itineraryId, { language: 'Vietnamese' });
-      const freshItineraries = await itineraryApi.getByTrip(tripId);
-      setItineraries(freshItineraries);
+      await refetch();
+      toast.success('Đã tạo lại ngày thành công!', { id: toastId });
     } catch {
-      setError('Không thể tạo lại ngày này.');
+      toast.error('Không thể tạo lại ngày này.', { id: toastId });
     }
   };
 
   if (loading) return <LoadingSkeleton />;
   if (trip?.status === 'GENERATING') return <GeneratingOverlay />;
 
-  if (error) {
+  if (isError) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] gap-6">
         <span className="material-symbols-outlined text-6xl text-error">error</span>
-        <p className="text-on-surface-variant text-center">{error}</p>
+        <p className="text-on-surface-variant text-center">{error instanceof Error ? error.message : 'Không thể tải lịch trình.'}</p>
         <div className="flex gap-4">
-          <button onClick={() => window.location.reload()} className="px-6 py-3 bg-surface-container-high text-on-surface rounded-full font-bold hover:bg-surface-container-highest transition-colors">
+          <button onClick={() => refetch()} className="px-6 py-3 bg-surface-container-high text-on-surface rounded-full font-bold hover:bg-surface-container-highest transition-colors cursor-pointer">
             Thử lại
           </button>
-          <button onClick={() => navigate('/')} className="px-6 py-3 bg-primary text-white rounded-full font-bold hover:bg-primary/90 transition-colors">
+          <button onClick={() => navigate('/')} className="px-6 py-3 bg-primary text-white rounded-full font-bold hover:bg-primary/90 transition-colors cursor-pointer">
             Về trang chủ
           </button>
         </div>

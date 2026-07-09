@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { tripApi } from '../services/api';
 import type { TripResponse } from '../types/trip';
 import { useAuth } from '../context/AuthContext';
 import ShareModal from '../components/ShareModal';
 
 const STATUS_LABELS: Record<string, string> = {
-  PLANNING:   'Đang lên kế hoạch',
-  GENERATED:  'Đã tạo',
-  CONFIRMED:  'Đã xác nhận',
+  PLANNING: 'Đang lên kế hoạch',
+  GENERATED: 'Đã tạo',
+  CONFIRMED: 'Đã xác nhận',
 };
 
 const STATUS_CLASS: Record<string, string> = {
-  PLANNING:   'bg-primary/10 text-primary',
-  GENERATED:  'bg-cta/10 text-cta',
-  CONFIRMED:  'bg-primary text-white',
+  PLANNING: 'bg-primary/10 text-primary',
+  GENERATED: 'bg-cta/10 text-cta',
+  CONFIRMED: 'bg-primary text-white',
 };
 
 const DESTINATION_IMAGES: Record<string, string> = {
@@ -64,20 +66,21 @@ function TripCardSkeleton() {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [trips, setTrips] = useState<TripResponse[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedTripToShare, setSelectedTripToShare] = useState<TripResponse | null>(null);
 
+  const { data: trips = [], isLoading: loading, isError, error } = useQuery({
+    queryKey: ['trips', user?.id],
+    queryFn: () => tripApi.getAll(user!.id),
+    enabled: !!user?.id,
+  });
+
   useEffect(() => {
-    if (!user?.id) return;
-    
-    tripApi.getAll(user.id)
-      .then(setTrips)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [user?.id]);
+    if (isError && error) {
+      toast.error(error.message || 'Không thể tải dữ liệu chuyến đi. Vui lòng thử lại!');
+    }
+  }, [isError, error]);
 
   const handleShareClick = (e: React.MouseEvent, trip: TripResponse) => {
     e.stopPropagation();
@@ -156,7 +159,7 @@ export default function Dashboard() {
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="text-xl font-bold text-text font-display line-clamp-1 group-hover:text-primary transition-colors pr-2">{trip.title}</h4>
                     {(trip.status === 'CONFIRMED' || trip.status === 'GENERATED') && (
-                      <button 
+                      <button
                         onClick={(e) => handleShareClick(e, trip)}
                         className="p-1.5 bg-emerald-100/50 hover:bg-emerald-500 hover:text-white text-emerald-600 rounded-full transition-all flex-shrink-0"
                         title="Chia sẻ chuyến đi này"
@@ -173,7 +176,7 @@ export default function Dashboard() {
                     <div className="flex flex-col">
                       <span className="text-[10px] font-bold text-text-muted/60 uppercase tracking-widest">Ngân sách</span>
                       <span className="text-sm font-bold text-text">
-                        {trip.totalCost > 0 
+                        {trip.totalCost > 0
                           ? new Intl.NumberFormat('vi-VN').format(trip.totalCost)
                           : new Intl.NumberFormat('vi-VN').format(trip.budget)
                         } <span className="text-[10px]">VND</span>
@@ -216,9 +219,9 @@ export default function Dashboard() {
 
       {/* Share Modal */}
       {selectedTripToShare && (
-        <ShareModal 
-          isOpen={shareModalOpen} 
-          onClose={() => setShareModalOpen(false)} 
+        <ShareModal
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
           type="TRIP"
           refId={selectedTripToShare.id}
           title={selectedTripToShare.title || selectedTripToShare.destination}
