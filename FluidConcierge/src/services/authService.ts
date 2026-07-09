@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8090/api/auth';
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api/v1') + '/auth';
 
 export interface UserResponse {
   id: string;
@@ -17,12 +17,12 @@ export interface AuthResponse {
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await axios.post(`${API_URL}/login`, { email, password });
+    const response = await axios.post(`${API_URL}/login`, { email, password }, { withCredentials: true });
     return response.data;
   },
 
   async register(email: string, password: string, name: string): Promise<UserResponse> {
-    const response = await axios.post(`${API_URL}/register`, { email, password, name });
+    const response = await axios.post(`${API_URL}/register`, { email, password, name }, { withCredentials: true });
     return response.data;
   },
 };
