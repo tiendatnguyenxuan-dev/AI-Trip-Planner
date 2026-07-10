@@ -4,20 +4,29 @@ import com.example.tripplanner.domain.model.ShareStatus;
 import com.example.tripplanner.domain.model.ShareType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "shared_contents", indexes = {
-    @Index(name = "idx_shared_type_status", columnList = "type, status")
+    @Index(name = "idx_shared_type_status",  columnList = "type, status"),
+    @Index(name = "idx_shared_user_id",      columnList = "user_id"),
+    @Index(name = "idx_shared_ref_id",       columnList = "ref_id"),
+    @Index(name = "idx_shared_created_at",   columnList = "created_at")
 })
+@SQLDelete(sql = "UPDATE shared_contents SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SharedContentEntity {
+@EqualsAndHashCode(callSuper = false)
+public class SharedContentEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -35,13 +44,13 @@ public class SharedContentEntity {
     private ShareType type;
 
     @Column(name = "ref_id", nullable = false, columnDefinition = "CHAR(36)")
-    private UUID refId; // Can be Trip ID or Activity ID
+    private UUID refId;
 
     @Column(columnDefinition = "TEXT")
-    private String content; // JSON storing description, tips, user review
+    private String content;
 
     @Column(name = "rating", nullable = false)
-    private Double rating; // Current average rating
+    private Double rating;
 
     @Column(name = "total_rating_sum", nullable = false)
     @Builder.Default
@@ -49,20 +58,20 @@ public class SharedContentEntity {
 
     @Column(name = "total_votes", nullable = false)
     @Builder.Default
-    private Integer totalVotes = 0; // Number of upvotes from community
-    
+    private Integer totalVotes = 0;
+
     @ElementCollection
     @CollectionTable(name = "shared_content_images", joinColumns = @JoinColumn(name = "shared_content_id"))
     @Column(name = "image_url")
     @Builder.Default
-    private java.util.List<String> imageUrls = new java.util.ArrayList<>();
-    
+    private List<String> imageUrls = new ArrayList<>();
+
     @Column(columnDefinition = "TEXT")
     private String description;
-    
+
     @Column(name = "cost")
     private Double cost;
-    
+
     @Column(name = "duration")
     private Integer duration;
 
@@ -71,7 +80,7 @@ public class SharedContentEntity {
     @Builder.Default
     private ShareStatus status = ShareStatus.PENDING;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    /** Soft delete timestamp. NULL = active, NOT NULL = deleted. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

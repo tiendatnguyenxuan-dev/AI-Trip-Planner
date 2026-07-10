@@ -22,7 +22,6 @@ public class PersistenceMapper {
                 .name(domain.getName())
                 .role(domain.getRole())
                 .status(domain.getStatus())
-                .createdAt(domain.getCreatedAt())
                 .lastActiveAt(domain.getLastActiveAt())
                 .build();
     }
@@ -55,7 +54,6 @@ public class PersistenceMapper {
                 .endDate(domain.getEndDate())
                 .budget(domain.getBudget())
                 .status(domain.getStatus())
-                .createdAt(domain.getCreatedAt())
                 .build();
 
         if (domain.getItineraries() != null) {
@@ -348,7 +346,6 @@ public class PersistenceMapper {
                 .cost(domain.getCost())
                 .duration(domain.getDuration())
                 .status(domain.getStatus())
-                .createdAt(domain.getCreatedAt())
                 .build();
     }
 
@@ -380,7 +377,6 @@ public class PersistenceMapper {
                 .sharedContentId(domain.getSharedContentId())
                 .user(toEntity(domain.getUser()))
                 .content(domain.getContent())
-                .createdAt(domain.getCreatedAt())
                 .build();
     }
 

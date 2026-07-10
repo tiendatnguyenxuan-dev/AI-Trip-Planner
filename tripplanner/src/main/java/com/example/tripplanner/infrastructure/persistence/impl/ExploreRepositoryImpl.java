@@ -2,10 +2,14 @@ package com.example.tripplanner.infrastructure.persistence.impl;
 
 import com.example.tripplanner.domain.model.ExploreItem;
 import com.example.tripplanner.domain.port.ExploreRepository;
+import com.example.tripplanner.infrastructure.config.CacheConfig;
 import com.example.tripplanner.infrastructure.persistence.entity.ExploreItemEntity;
 import com.example.tripplanner.infrastructure.persistence.repository.JpaExploreItemRepository;
 import com.example.tripplanner.infrastructure.persistence.PersistenceMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -23,6 +27,10 @@ public class ExploreRepositoryImpl implements ExploreRepository {
     private final PersistenceMapper mapper;
 
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_EXPLORE_TRENDING, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_EXPLORE_ITEMS, allEntries = true)
+    })
     public ExploreItem save(ExploreItem item) {
         ExploreItemEntity entity = mapper.toExploreItemEntity(item);
         return mapper.toExploreItem(jpaExploreItemRepository.save(entity));
@@ -41,6 +49,7 @@ public class ExploreRepositoryImpl implements ExploreRepository {
     }
 
     @Override
+    @Cacheable(value = CacheConfig.CACHE_EXPLORE_TRENDING)
     public List<ExploreItem> findTrending() {
         return jpaExploreItemRepository.findTop5ByOrderByPopularityScoreDesc().stream()
                 .map(mapper::toExploreItem)
@@ -62,6 +71,10 @@ public class ExploreRepositoryImpl implements ExploreRepository {
     }
 
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_EXPLORE_TRENDING, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_EXPLORE_ITEMS, allEntries = true)
+    })
     public void deleteById(UUID id) {
         jpaExploreItemRepository.deleteById(id);
     }

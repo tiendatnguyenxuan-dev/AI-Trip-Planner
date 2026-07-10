@@ -3,18 +3,29 @@ package com.example.tripplanner.infrastructure.persistence.entity;
 import com.example.tripplanner.domain.model.ExploreType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "explore_items")
+@Table(name = "explore_items", indexes = {
+    @Index(name = "idx_explore_destination",  columnList = "destination"),
+    @Index(name = "idx_explore_type",         columnList = "type"),
+    @Index(name = "idx_explore_popularity",   columnList = "popularity_score")
+})
+@SQLDelete(sql = "UPDATE explore_items SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ExploreItemEntity {
+@EqualsAndHashCode(callSuper = false)
+public class ExploreItemEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,7 +34,7 @@ public class ExploreItemEntity {
 
     private String title;
     private String destination;
-    
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -57,4 +68,8 @@ public class ExploreItemEntity {
 
     @Version
     private Long version;
+
+    /** Soft delete timestamp. NULL = active, NOT NULL = deleted. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
