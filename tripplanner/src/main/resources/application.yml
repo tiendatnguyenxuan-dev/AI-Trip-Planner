@@ -1,35 +1,61 @@
 spring:
   application:
     name: tripplanner
-  
-  # 🐬 MySQL Database Configuration
+
+  # 🐬 MySQL DataSource + HikariCP Connection Pool
   datasource:
     url: jdbc:mysql://localhost:3306/trip?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     driverClassName: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:1234}
-  
+    hikari:
+      # Sized for a typical 4-core development machine (2 × cores + 1 spare)
+      maximum-pool-size: 10
+      # Keep at least 5 connections warm — avoids cold-start latency spikes
+      minimum-idle: 5
+      # 20 s: fail fast when all connections are busy; don't block the request thread
+      connection-timeout: 20000
+      # 5 min idle before a connection is retired — keeps the pool fresh
+      idle-timeout: 300000
+      # 20 min lifetime — safely below MySQL default wait_timeout (8 h)
+      max-lifetime: 1200000
+      pool-name: TripPlannerHikariPool
+
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 50MB
-  
-  jpa: 
+
+  # 🗃️ JPA — schema validated, NOT auto-updated (Flyway owns schema now)
+  jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         type:
           preferred_uuid_jdbc_type: CHAR
-  
-  # ⚡ Redis Configuration
+        # Batch inserts/updates for better throughput
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  # 🗃 Flyway — versioned schema migrations
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+
+  # ⚡ Redis
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
-  
+
 server:
   port: 8090
 

@@ -1,20 +1,23 @@
 package com.example.tripplanner.infrastructure.persistence.entity;
 
 import com.example.tripplanner.domain.model.Role;
+import com.example.tripplanner.domain.model.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+    @Index(name = "idx_user_email", columnList = "email")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserEntity {
+@EqualsAndHashCode(callSuper = false)
+public class UserEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,11 +39,7 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private com.example.tripplanner.domain.model.UserStatus status = com.example.tripplanner.domain.model.UserStatus.ACTIVE;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    private UserStatus status = UserStatus.ACTIVE;
 
     @Column(name = "last_active_at")
     private LocalDateTime lastActiveAt;

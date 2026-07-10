@@ -30,7 +30,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration",
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration,org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration",
+        "spring.flyway.enabled=false",
+        "spring.jpa.hibernate.ddl-auto=update",
         "app.jwt.secret=very-long-secret-key-that-must-be-at-least-32-characters-long-access-key",
         "app.jwt.expiration=600000",
         "app.refresh.secret=another-very-long-secret-key-that-must-be-at-least-32-characters-long-refresh-key",

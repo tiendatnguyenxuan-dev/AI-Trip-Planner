@@ -3,7 +3,8 @@ package com.example.tripplanner.infrastructure.persistence.entity;
 import com.example.tripplanner.domain.model.TripStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,13 +15,18 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "trips", indexes = {
-    @Index(name = "idx_trip_user_id", columnList = "user_id")
+    @Index(name = "idx_trip_user_id",    columnList = "user_id"),
+    @Index(name = "idx_trip_destination", columnList = "destination"),
+    @Index(name = "idx_trip_created_at",  columnList = "created_at")
 })
+@SQLDelete(sql = "UPDATE trips SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TripEntity {
+@EqualsAndHashCode(callSuper = false)
+public class TripEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -48,9 +54,9 @@ public class TripEntity {
     @Column(length = 50)
     private TripStatus status;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    /** Soft delete timestamp. NULL = active, NOT NULL = deleted. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("dayNumber ASC")
