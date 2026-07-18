@@ -14,11 +14,15 @@ from typing import Dict, Any
 import datetime
 from datetime import timedelta
 
+from app.shared.context.trip_context import TripContext
+
 class ParsePipeline:
-    async def execute(self, text: str, user_id: str = None) -> ParseResponse:
+    async def execute(self, context: TripContext) -> ParseResponse:
         """
         Execute the full parsing pipeline.
         """
+        text = context.request["text"]
+        user_id = context.request["user_id"]
         logger.info(f"--- Processing Query: '{text}' for user: {user_id} ---")
         
         # In a real app, fetch user_profile from DB using user_id
@@ -118,11 +122,13 @@ class ParsePipeline:
                 entities_dict["travelers"] = 2 # Global default
 
         # 6. Build Response
-        return ParseResponse(
+        response = ParseResponse(
             intent=intent,
             entities=EntityResponse(**entities_dict),
             confidence=round(confidence, 2),
             source=source
         )
+        context.parsed_query = response
+        return response
 
 parse_pipeline = ParsePipeline()

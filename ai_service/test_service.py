@@ -2,6 +2,7 @@ import asyncio
 import json
 from app.pipelines.parse_pipeline import parse_pipeline
 from app.pipelines.trip_pipeline import trip_pipeline
+from app.shared.context.trip_context import TripContext
 
 async def test_parse():
     test_cases = [
@@ -21,7 +22,8 @@ async def test_parse():
     
     for text in test_cases:
         print(f"\n[INPUT] {text}")
-        result = await parse_pipeline.execute(text)
+        context = TripContext(text)
+        result = await parse_pipeline.execute(context)
         
         print("\n[FINAL RESULT]")
         print(f"Intent    : {result.intent}")
@@ -43,7 +45,8 @@ async def test_trip_plan():
     
     for text in test_cases:
         print(f"\n[INPUT] {text}")
-        result = await trip_pipeline.execute(text)
+        context = TripContext(text)
+        result = await trip_pipeline.execute(context)
         
         print("\n[TRIP PLAN RESULT]")
         print(f"Intent    : {result.intent}")
@@ -63,21 +66,24 @@ async def test_personalization():
     # First request: Provide details to build history
     req1 = "đi đà lạt 3 ngày budget 2tr chill"
     print(f"\n[REQUEST 1 (Build Profile)] {req1}")
-    res1 = await trip_pipeline.execute(req1, user_id=user_id)
+    ctx1 = TripContext(req1, user_id=user_id)
+    res1 = await trip_pipeline.execute(ctx1)
     print(f"Personalized: {res1.personalized}")
     print(f"Entities: {res1.entities.model_dump(exclude_none=True)}")
     
     # Second request: Missing vibe and budget, should auto-fill
     req2 = "nha trang 2 ngày"
     print(f"\n[REQUEST 2 (Missing info)] {req2}")
-    res2 = await trip_pipeline.execute(req2, user_id=user_id)
+    ctx2 = TripContext(req2, user_id=user_id)
+    res2 = await trip_pipeline.execute(ctx2)
     print(f"Personalized: {res2.personalized}")
     print(f"Entities: {res2.entities.model_dump(exclude_none=True)}")
     
     # Third request: Completely blank destination
     req3 = "muốn đi đâu đó 1 ngày thư giãn"
     print(f"\n[REQUEST 3 (Missing destination)] {req3}")
-    res3 = await trip_pipeline.execute(req3, user_id=user_id)
+    ctx3 = TripContext(req3, user_id=user_id)
+    res3 = await trip_pipeline.execute(ctx3)
     print(f"Personalized: {res3.personalized}")
     print(f"Entities: {res3.entities.model_dump(exclude_none=True)}")
     print("-" * 50)
