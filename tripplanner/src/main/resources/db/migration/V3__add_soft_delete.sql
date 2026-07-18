@@ -5,13 +5,13 @@
 -- =============================================================================
 
 ALTER TABLE trips
-    ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
+    ADD COLUMN deleted_at DATETIME DEFAULT NULL;
 
 ALTER TABLE shared_contents
-    ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
+    ADD COLUMN deleted_at DATETIME DEFAULT NULL;
 
 ALTER TABLE comments
-    ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
+    ADD COLUMN deleted_at DATETIME DEFAULT NULL;
 
 ALTER TABLE explore_items
-    ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
+    ADD COLUMN deleted_at DATETIME DEFAULT NULL;
