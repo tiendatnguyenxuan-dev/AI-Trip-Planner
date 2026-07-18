@@ -1,4 +1,6 @@
 from app.application.prompts.base_prompt import BasePrompt
+from app.application.prompts.prompt_config import PromptConfig
+from typing import List
 
 class ExtractionPrompt(BasePrompt):
     """
@@ -13,16 +15,16 @@ class ExtractionPrompt(BasePrompt):
         return "1.0.0"
 
     @property
-    def temperature(self) -> float:
-        return 0.1
+    def config(self) -> PromptConfig:
+        return PromptConfig(
+            temperature=0.1,
+            max_tokens=1000,
+            provider="default"
+        )
 
     @property
-    def max_tokens(self) -> int:
-        return 1000
-
-    @property
-    def provider(self) -> str:
-        return "default"
+    def required_variables(self) -> List[str]:
+        return ["text"]
 
     @property
     def content(self) -> str:
