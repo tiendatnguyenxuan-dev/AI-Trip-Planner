@@ -1,85 +1,54 @@
 import logging
-from app.pipelines.parse_pipeline import parse_pipeline
-from app.services.recommendation_service import recommendation_service
-from app.services.itinerary_service import itinerary_service
-from app.services.user_service import user_service
-from app.services.history_service import history_service
-from app.services.personalization_service import personalization_service
 from app.models.schemas import TripPlanResponse, RecommendationResponse, ItineraryResponse
 
 logger = logging.getLogger(__name__)
 
 from app.shared.context.trip_context import TripContext
 
+from app.application.nodes.fetch_user_node import FetchUserNode
+from app.application.nodes.parse_node import ParseNode
+from app.application.nodes.personalization_node import PersonalizationNode
+from app.application.nodes.recommendation_node import RecommendationNode
+from app.application.nodes.planning_node import PlanningNode
+from app.application.nodes.history_node import HistoryNode
+
 class TripPipeline:
+    def __init__(self):
+        # Register nodes in execution order
+        self.nodes = [
+            FetchUserNode(),
+            ParseNode(),
+            PersonalizationNode(),
+            RecommendationNode(),
+            PlanningNode(),
+            HistoryNode()
+        ]
+
     async def execute(self, context: TripContext) -> TripPlanResponse:
         logger.info(f"--- Trip Planning Execution Started ---")
-        text = context.request["text"]
-        user_id = context.request["user_id"]
         
-        # 1. Fetch User Profile
-        if user_id:
-            context.user_profile = user_service.get_profile(user_id)
+        for node in self.nodes:
+            logger.info(f"Executing node: {node.name}")
+            await node.before_execute(context)
+            await node.validate(context)
+            await node.execute(context)
+            await node.after_execute(context)
             
-        # 2. Parse Query
-        context.parsed_query = await parse_pipeline.execute(context)
-        entities = context.parsed_query.entities
-        
-        # 3. Personalization (Rule-based enhancement for fast-path or misses)
-        personalized = False
-        if user_id:
-            entities, personalized = personalization_service.enhance_entities(entities, context.user_profile)
-            context.metadata["personalized"] = personalized
-        
-        destination = entities.destination
-        budget = entities.budget
-        vibe = entities.vibe
-        duration_days = entities.duration_days
-        
-        if not destination:
-            # Fallback if no destination was found (even after LLM repair and personalization)
-            logger.warning("No destination found. Cannot generate itinerary.")
-            response = TripPlanResponse(
-                intent=context.parsed_query.intent,
-                entities=entities,
-                recommendations=RecommendationResponse(places=[], hotels=[]),
-                itinerary=ItineraryResponse(days=[]),
-                personalized=personalized
-            )
-            context.recommendations = response.recommendations
-            context.itinerary = response.itinerary
-            return response
-            
-        # 3. Get Recommendations
-        rec_data = recommendation_service.get_recommendations(destination, budget, vibe)
-        context.recommendations = RecommendationResponse(**rec_data)
-        
-        # 4. Generate Itinerary
-        itin_data = await itinerary_service.generate_itinerary(
-            destination=destination, 
-            duration_days=duration_days,
-            budget=budget,
-            vibe=vibe,
-            group_type=entities.group_type
-        )
-        context.itinerary = ItineraryResponse(**itin_data)
-        
-        # 5. Save History & Update Profile
-        if user_id:
-            history_service.save_history(user_id, entities)
-            user_service.update_profile(user_id)
-            context.history = {"saved": True}
-        
         logger.info(f"--- Trip Planning Execution Completed ---")
         
-        # 6. Assemble Final Response
-        response = TripPlanResponse(
-            intent=context.parsed_query.intent,
+        # Assemble final response from context
+        intent = context.parsed_query.intent if context.parsed_query else "UNKNOWN"
+        entities = context.parsed_query.entities if context.parsed_query else None
+        recommendations = context.recommendations or RecommendationResponse(places=[], hotels=[])
+        itinerary = context.itinerary or ItineraryResponse(days=[])
+        personalized = context.metadata.get("personalized", False)
+        
+        return TripPlanResponse(
+            intent=intent,
             entities=entities,
-            recommendations=context.recommendations,
-            itinerary=context.itinerary,
+            recommendations=recommendations,
+            itinerary=itinerary,
             personalized=personalized
         )
-        return response
 
 trip_pipeline = TripPipeline()
