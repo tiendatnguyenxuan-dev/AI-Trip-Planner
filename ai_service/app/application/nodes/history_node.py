@@ -7,6 +7,10 @@ class HistoryNode(BaseNode):
     """
     Saves the processed trip details into the user's travel history and updates user metrics.
     """
+    @property
+    def name(self) -> str:
+        return "HistoryNode"
+
     async def execute(self, context: TripContext) -> None:
         user_id = context.request.get("user_id")
         if user_id and context.parsed_query:

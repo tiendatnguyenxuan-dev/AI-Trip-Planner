@@ -6,6 +6,10 @@ class ParseNode(BaseNode):
     """
     Parses natural language input queries into structured entities.
     """
+    @property
+    def name(self) -> str:
+        return "ParseNode"
+
     async def execute(self, context: TripContext) -> None:
         # Executes the existing parse_pipeline logic
         await parse_pipeline.execute(context)

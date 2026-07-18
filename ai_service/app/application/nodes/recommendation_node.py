@@ -7,6 +7,10 @@ class RecommendationNode(BaseNode):
     """
     Retrieves venue, dining, and lodging recommendations matching the trip's metadata.
     """
+    @property
+    def name(self) -> str:
+        return "RecommendationNode"
+
     async def execute(self, context: TripContext) -> None:
         if not context.parsed_query:
             return

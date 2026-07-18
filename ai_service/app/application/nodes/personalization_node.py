@@ -6,6 +6,10 @@ class PersonalizationNode(BaseNode):
     """
     Applies user preferences and history personalization constraints to parsed entities.
     """
+    @property
+    def name(self) -> str:
+        return "PersonalizationNode"
+
     async def execute(self, context: TripContext) -> None:
         user_id = context.request.get("user_id")
         if user_id and context.parsed_query:

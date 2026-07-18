@@ -6,6 +6,10 @@ class FetchUserNode(BaseNode):
     """
     Fetches the user's profile if user_id is provided.
     """
+    @property
+    def name(self) -> str:
+        return "FetchUserNode"
+
     async def execute(self, context: TripContext) -> None:
         user_id = context.request.get("user_id")
         if user_id:

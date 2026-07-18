@@ -7,6 +7,10 @@ class PlanningNode(BaseNode):
     """
     Generates a day-by-day travel itinerary for the trip.
     """
+    @property
+    def name(self) -> str:
+        return "PlanningNode"
+
     async def execute(self, context: TripContext) -> None:
         if not context.parsed_query:
             return
