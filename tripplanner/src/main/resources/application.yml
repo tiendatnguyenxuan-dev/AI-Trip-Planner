@@ -49,6 +49,8 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     validate-on-migrate: true
+    clean-disabled: false
+    clean-on-validation-error: true
 
   # ⚡ Redis
   data:

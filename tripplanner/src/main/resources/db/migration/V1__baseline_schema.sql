@@ -170,9 +170,9 @@ CREATE TABLE IF NOT EXISTS ai_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Existing indexes (were managed by Hibernate @Index annotations)
-CREATE INDEX IF NOT EXISTS idx_trip_user_id         ON trips (user_id);
-CREATE INDEX IF NOT EXISTS idx_itinerary_trip_id    ON itineraries (trip_id);
-CREATE INDEX IF NOT EXISTS idx_activity_itinerary_id ON activities (itinerary_id);
-CREATE INDEX IF NOT EXISTS idx_shared_type_status   ON shared_contents (type, status);
-CREATE INDEX IF NOT EXISTS idx_ai_log_trip_id       ON ai_logs (trip_id);
-CREATE INDEX IF NOT EXISTS idx_ai_log_status        ON ai_logs (status);
+CREATE INDEX idx_trip_user_id         ON trips (user_id);
+CREATE INDEX idx_itinerary_trip_id    ON itineraries (trip_id);
+CREATE INDEX idx_activity_itinerary_id ON activities (itinerary_id);
+CREATE INDEX idx_shared_type_status   ON shared_contents (type, status);
+CREATE INDEX idx_ai_log_trip_id       ON ai_logs (trip_id);
+CREATE INDEX idx_ai_log_status        ON ai_logs (status);
