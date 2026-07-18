@@ -1,12 +1,14 @@
 from app.application.nodes.base_node import BaseNode
 from app.shared.context.trip_context import TripContext
-from app.services.itinerary_service import itinerary_service
 from app.models.schemas import ItineraryResponse
 
 class PlanningNode(BaseNode):
     """
     Generates a day-by-day travel itinerary for the trip.
     """
+    def __init__(self, itinerary_service):
+        self.itinerary_service = itinerary_service
+
     @property
     def name(self) -> str:
         return "PlanningNode"
@@ -21,7 +23,7 @@ class PlanningNode(BaseNode):
             context.itinerary = ItineraryResponse(days=[])
             return
             
-        itin_data = await itinerary_service.generate_itinerary(
+        itin_data = await self.itinerary_service.generate_itinerary(
             destination=destination,
             duration_days=entities.duration_days,
             budget=entities.budget,

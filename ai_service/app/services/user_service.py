@@ -1,6 +1,5 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from collections import Counter
-from app.services.history_service import history_service
 from app.application.repositories.base_user_repository import BaseUserRepository
 from app.infrastructure.repositories.in_memory_user_repository import InMemoryUserRepository
 
@@ -11,12 +10,8 @@ class UserService:
     def __init__(self, repository: BaseUserRepository = None):
         self.repository = repository or InMemoryUserRepository()
 
-    def update_profile(self, user_id: str) -> None:
-        if not user_id:
-            return
-            
-        history = history_service.get_history(user_id)
-        if not history:
+    def update_profile(self, user_id: str, history: List[Dict[str, Any]]) -> None:
+        if not user_id or not history:
             return
             
         vibes = [entry["vibe"] for entry in history if entry.get("vibe") and "[LLM Repaired]" not in entry["vibe"]]

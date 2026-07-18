@@ -1,28 +1,26 @@
 import logging
 from app.models.schemas import TripPlanResponse, RecommendationResponse, ItineraryResponse
+from app.shared.context.trip_context import TripContext
 
 logger = logging.getLogger(__name__)
 
-from app.shared.context.trip_context import TripContext
-
-from app.application.nodes.fetch_user_node import FetchUserNode
-from app.application.nodes.parse_node import ParseNode
-from app.application.nodes.personalization_node import PersonalizationNode
-from app.application.nodes.recommendation_node import RecommendationNode
-from app.application.nodes.planning_node import PlanningNode
-from app.application.nodes.history_node import HistoryNode
-
 class TripPipeline:
-    def __init__(self):
-        # Register nodes in execution order
-        self.nodes = [
-            FetchUserNode(),
-            ParseNode(),
-            PersonalizationNode(),
-            RecommendationNode(),
-            PlanningNode(),
-            HistoryNode()
-        ]
+    """
+    Orchestration pipeline executing sequential travel planning nodes.
+    """
+    def __init__(self, nodes=None):
+        if nodes is None:
+            # Fallback for backward-compatibility with singleton imports
+            from app.shared.di import container
+            nodes = [
+                container.fetch_user_node,
+                container.parse_node,
+                container.personalization_node,
+                container.recommendation_node,
+                container.planning_node,
+                container.history_node
+            ]
+        self.nodes = nodes
 
     async def execute(self, context: TripContext) -> TripPlanResponse:
         logger.info(f"--- Trip Planning Execution Started ---")
