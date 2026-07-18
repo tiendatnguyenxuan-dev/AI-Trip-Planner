@@ -1,6 +1,6 @@
 import random
 from typing import Dict, Any, List
-from app.infrastructure.repositories.base_recommendation_repository import BaseRecommendationRepository
+from app.application.repositories.base_recommendation_repository import BaseRecommendationRepository
 from app.infrastructure.repositories.json_recommendation_repository import JSONRecommendationRepository
 
 class RecommendationService:

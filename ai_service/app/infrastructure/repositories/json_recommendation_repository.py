@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Dict, Any, Optional
-from app.infrastructure.repositories.base_recommendation_repository import BaseRecommendationRepository
+from app.application.repositories.base_recommendation_repository import BaseRecommendationRepository
 
 class JSONRecommendationRepository(BaseRecommendationRepository):
     """

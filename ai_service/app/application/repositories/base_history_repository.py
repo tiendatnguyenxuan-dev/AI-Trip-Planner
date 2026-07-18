@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 class BaseHistoryRepository(ABC):
     """
-    Abstract interface for managing user travel history.
+    Abstract interface for managing user travel history (domain port).
     """
     @abstractmethod
     def save_history(self, user_id: str, history_entry: Dict[str, Any]) -> None:

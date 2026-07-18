@@ -4,7 +4,7 @@ from app.services.user_service import user_service
 
 class FetchUserNode(BaseNode):
     """
-    Fetches the user's profile if user_id is provided.
+    Fetches the user's profile if user_id is provided by calling the UserService boundary.
     """
     @property
     def name(self) -> str:

@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 
 class BaseRecommendationRepository(ABC):
     """
-    Abstract interface for retrieving destination recommendations.
+    Abstract interface for retrieving destination recommendations (domain port).
     """
     @abstractmethod
     def get_destination_data(self, destination: str) -> Optional[Dict[str, Any]]:

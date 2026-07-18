@@ -2,7 +2,7 @@ import json
 import os
 import logging
 from typing import List, Dict, Any
-from app.infrastructure.repositories.base_history_repository import BaseHistoryRepository
+from app.application.repositories.base_history_repository import BaseHistoryRepository
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from app.infrastructure.repositories.base_history_repository import BaseHistoryRepository
+from app.application.repositories.base_history_repository import BaseHistoryRepository
 from app.infrastructure.repositories.file_history_repository import FileHistoryRepository
 
 class HistoryService:
