@@ -1,0 +1,31 @@
+from app.application.nodes.base_node import BaseNode
+from app.shared.context.trip_context import TripContext
+from app.models.schemas import RecommendationResponse
+
+class RecommendationNode(BaseNode):
+    """
+    Retrieves venue, dining, and lodging recommendations matching the trip's metadata.
+    """
+    def __init__(self, recommendation_service):
+        self.recommendation_service = recommendation_service
+
+    @property
+    def name(self) -> str:
+        return "RecommendationNode"
+
+    async def execute(self, context: TripContext) -> None:
+        if not context.parsed_query:
+            return
+            
+        entities = context.parsed_query.entities
+        destination = entities.destination
+        if not destination:
+            context.recommendations = RecommendationResponse(places=[], hotels=[])
+            return
+            
+        rec_data = self.recommendation_service.get_recommendations(
+            destination=destination,
+            budget=entities.budget,
+            vibe=entities.vibe
+        )
+        context.recommendations = RecommendationResponse(**rec_data)

@@ -1,18 +1,17 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from collections import Counter
-from app.services.history_service import history_service
-
-# Global in-memory storage for user profiles
-# Structure: { "user_id": { "preferred_vibe": "...", "avg_budget": 1000000, "frequent_destination": "..." } }
-user_profiles_db: Dict[str, Dict[str, Any]] = {}
+from app.application.repositories.base_user_repository import BaseUserRepository
+from app.infrastructure.repositories.in_memory_user_repository import InMemoryUserRepository
 
 class UserService:
-    def update_profile(self, user_id: str):
-        if not user_id:
-            return
-            
-        history = history_service.get_history(user_id)
-        if not history:
+    """
+    Service coordinating user profile updates and metrics extraction.
+    """
+    def __init__(self, repository: BaseUserRepository = None):
+        self.repository = repository or InMemoryUserRepository()
+
+    def update_profile(self, user_id: str, history: List[Dict[str, Any]]) -> None:
+        if not user_id or not history:
             return
             
         vibes = [entry["vibe"] for entry in history if entry.get("vibe") and "[LLM Repaired]" not in entry["vibe"]]
@@ -23,13 +22,14 @@ class UserService:
         frequent_dest = Counter(destinations).most_common(1)[0][0] if destinations else None
         avg_budget = sum(budgets) / len(budgets) if budgets else None
         
-        user_profiles_db[user_id] = {
+        profile = {
             "preferred_vibe": preferred_vibe,
             "frequent_destination": frequent_dest,
             "avg_budget": avg_budget
         }
+        self.repository.save_profile(user_id, profile)
         
     def get_profile(self, user_id: str) -> Dict[str, Any]:
-        return user_profiles_db.get(user_id, {})
+        return self.repository.get_profile(user_id) or {}
 
 user_service = UserService()

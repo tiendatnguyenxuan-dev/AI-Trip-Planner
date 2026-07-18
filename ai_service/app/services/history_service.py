@@ -1,16 +1,18 @@
 from typing import Dict, Any, List
-
-# Global in-memory storage for trip history
-# Structure: { "user_id": [ { "destination": "...", "vibe": "...", "budget": 2000000 }, ... ] }
-trip_history_db: Dict[str, List[Dict[str, Any]]] = {}
+from app.application.repositories.base_history_repository import BaseHistoryRepository
+from app.infrastructure.repositories.file_history_repository import FileHistoryRepository
 
 class HistoryService:
-    def save_history(self, user_id: str, entities: Any):
+    """
+    Service coordinating travel history saves and lookups.
+    Delegates persistence to BaseHistoryRepository.
+    """
+    def __init__(self, repository: BaseHistoryRepository = None):
+        self.repository = repository or FileHistoryRepository()
+
+    def save_history(self, user_id: str, entities: Any) -> None:
         if not user_id:
             return
-            
-        if user_id not in trip_history_db:
-            trip_history_db[user_id] = []
             
         dest = entities.destination if entities.destination and "[LLM Repaired]" not in entities.destination else None
         vibe = entities.vibe if entities.vibe and "[LLM Repaired]" not in entities.vibe else None
@@ -28,9 +30,9 @@ class HistoryService:
         
         # Only save if there's some meaningful data
         if any(history_entry.values()):
-            trip_history_db[user_id].append(history_entry)
+            self.repository.save_history(user_id, history_entry)
             
     def get_history(self, user_id: str) -> List[Dict[str, Any]]:
-        return trip_history_db.get(user_id, [])
+        return self.repository.get_history(user_id)
 
 history_service = HistoryService()

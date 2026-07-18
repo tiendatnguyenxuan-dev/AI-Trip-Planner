@@ -6,13 +6,16 @@ from app.pipelines.trip_pipeline import trip_pipeline
 
 router = APIRouter()
 
+from app.shared.context.trip_context import TripContext
+
 @router.post("/parse-query", response_model=ParseResponse)
 async def parse_query(request: ParseRequest):
     """
     Parse a natural language travel query into structured data.
     """
     try:
-        result = await parse_pipeline.execute(request.text, request.user_id)
+        context = TripContext(request.text, request.user_id)
+        result = await parse_pipeline.execute(context)
         return result
     except Exception as e:
         # In production, log the error properly
@@ -24,7 +27,8 @@ async def plan_trip(request: ParseRequest):
     Parse a query and generate a full trip plan (recommendations and itinerary).
     """
     try:
-        result = await trip_pipeline.execute(request.text, request.user_id)
+        context = TripContext(request.text, request.user_id)
+        result = await trip_pipeline.execute(context)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

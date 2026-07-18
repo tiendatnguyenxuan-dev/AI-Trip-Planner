@@ -1,6 +1,7 @@
 import pytest
 from app.pipelines.parse_pipeline import parse_pipeline
 from app.models.schemas import ParseResponse
+from app.shared.context.trip_context import TripContext
 
 @pytest.mark.asyncio
 async def test_execute_success_path(mocker):
@@ -22,7 +23,8 @@ async def test_execute_success_path(mocker):
     text = "đi chơi ở đâu đó chill solo 2tr"
     # Giả sử text này làm confidence thấp hoặc trigger logic cần repair
     
-    response = await parse_pipeline.execute(text)
+    context = TripContext(text)
+    response = await parse_pipeline.execute(context)
     
     assert response.entities.destination == "Đà Lạt"
     assert response.entities.budget == 2000000
@@ -38,7 +40,8 @@ async def test_execute_broken_json_handling(mocker):
     mocker.patch('app.services.llm_service.llm_service.repair_entities', return_value={})
     
     text = "đi chơi"
-    response = await parse_pipeline.execute(text)
+    context = TripContext(text)
+    response = await parse_pipeline.execute(context)
     
     # Kiểm tra xem hệ thống có crash không
     assert response.entities is not None
@@ -55,7 +58,8 @@ async def test_execute_regex_only(mocker):
     # Mock llm_service để đảm bảo nó KHÔNG được gọi
     spy = mocker.spy(parse_pipeline, 'execute')
     
-    response = await parse_pipeline.execute(text)
+    context = TripContext(text)
+    response = await parse_pipeline.execute(context)
     
     assert response.entities.destination == "Đà Lạt"
     assert "regex" in response.source or "hybrid" in response.source
