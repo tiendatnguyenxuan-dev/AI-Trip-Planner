@@ -11,7 +11,12 @@ from app.services.history_service import HistoryService
 from app.services.llm_service import LLMService
 from app.services.itinerary_service import ItineraryService
 from app.services.personalization_service import PersonalizationService
+from app.services.entity_extractor import EntityExtractor
+from app.services.intent_service import IntentService
+from app.services.classifier_service import ClassifierService
+from app.services.confidence_service import ConfidenceService
 
+from app.pipelines.parse_pipeline import ParsePipeline
 from app.application.nodes.fetch_user_node import FetchUserNode
 from app.application.nodes.parse_node import ParseNode
 from app.application.nodes.personalization_node import PersonalizationNode
@@ -47,16 +52,30 @@ class Container:
             llm_service=self.llm_service
         )
         self.personalization_service = PersonalizationService()
+        self.entity_extractor = EntityExtractor(recommendation_repository=self.recommendation_repository)
+        self.intent_service = IntentService()
+        self.classifier_service = ClassifierService()
+        self.confidence_service = ConfidenceService()
 
-        # 4. Application Nodes (Explicit constructor injection)
+        # 4. Pipelines
+        self.parse_pipeline = ParsePipeline(
+            recommendation_repository=self.recommendation_repository,
+            entity_extractor=self.entity_extractor,
+            intent_service=self.intent_service,
+            classifier_service=self.classifier_service,
+            confidence_service=self.confidence_service,
+            llm_service=self.llm_service
+        )
+
+        # 5. Application Nodes (Explicit constructor injection)
         self.fetch_user_node = FetchUserNode(user_service=self.user_service)
-        self.parse_node = ParseNode()
+        self.parse_node = ParseNode(parse_pipeline=self.parse_pipeline)
         self.personalization_node = PersonalizationNode(personalization_service=self.personalization_service)
         self.recommendation_node = RecommendationNode(recommendation_service=self.recommendation_service)
         self.planning_node = PlanningNode(itinerary_service=self.itinerary_service)
         self.history_node = HistoryNode(history_service=self.history_service, user_service=self.user_service)
 
-        # 5. Orchestration Pipeline
+        # 6. Orchestration Pipeline
         from app.pipelines.trip_pipeline import TripPipeline
         self.trip_pipeline = TripPipeline(nodes=[
             self.fetch_user_node,

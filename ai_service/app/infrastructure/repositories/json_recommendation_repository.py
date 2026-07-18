@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from app.application.repositories.base_recommendation_repository import BaseRecommendationRepository
 
 class JSONRecommendationRepository(BaseRecommendationRepository):
@@ -33,3 +33,6 @@ class JSONRecommendationRepository(BaseRecommendationRepository):
             return None
         dest_title = destination.title()
         return self._destinations.get(dest_title)
+
+    def get_all_destinations(self) -> List[str]:
+        return list(self._destinations.keys())

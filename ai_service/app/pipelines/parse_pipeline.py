@@ -1,22 +1,43 @@
 import logging
-from app.services.entity_extractor import entity_extractor
-from app.services.intent_service import intent_service
-from app.services.classifier_service import classifier_service
-from app.services.confidence_service import confidence_service
-from app.services.llm_service import llm_service
-from app.services.data_service import data_service
-from app.models.schemas import ParseResponse, EntityResponse
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 from typing import Dict, Any
 import datetime
 from datetime import timedelta
 
+from app.models.schemas import ParseResponse, EntityResponse
 from app.shared.context.trip_context import TripContext
+from app.application.repositories.base_recommendation_repository import BaseRecommendationRepository
+from app.infrastructure.repositories.json_recommendation_repository import JSONRecommendationRepository
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ParsePipeline:
+    """
+    Pipeline orchestrating natural language query parsing and entity extraction.
+    Strictly accepts all dependencies via constructor injection.
+    """
+    def __init__(
+        self,
+        recommendation_repository: BaseRecommendationRepository = None,
+        entity_extractor = None,
+        intent_service = None,
+        classifier_service = None,
+        confidence_service = None,
+        llm_service = None
+    ):
+        from app.services.entity_extractor import entity_extractor as default_extractor
+        from app.services.intent_service import intent_service as default_intent
+        from app.services.classifier_service import classifier_service as default_classifier
+        from app.services.confidence_service import confidence_service as default_confidence
+        from app.services.llm_service import llm_service as default_llm
+
+        self.recommendation_repository = recommendation_repository or JSONRecommendationRepository()
+        self.entity_extractor = entity_extractor or default_extractor
+        self.intent_service = intent_service or default_intent
+        self.classifier_service = classifier_service or default_classifier
+        self.confidence_service = confidence_service or default_confidence
+        self.llm_service = llm_service or default_llm
+
     async def execute(self, context: TripContext) -> ParseResponse:
         """
         Execute the full parsing pipeline.
@@ -27,18 +48,17 @@ class ParsePipeline:
         
         # In a real app, fetch user_profile from DB using user_id
         user_profile = {} 
-        # (Chỗ này sau này bạn có thể viết code fetch DB thực tế)
         
         # 1. Layer 1: Extract Entities (Regex)
-        entities_dict = entity_extractor.extract(text)
+        entities_dict = self.entity_extractor.extract(text)
         logger.info(f"Layer 1 (Regex) Entities: {entities_dict}")
         
         # 2. Classify Intent
-        intent = intent_service.classify(text)
+        intent = self.intent_service.classify(text)
         logger.info(f"Intent Classified: {intent}")
         
         # 3. Layer 2: Lightweight Classification
-        classification_result = classifier_service.classify(text)
+        classification_result = self.classifier_service.classify(text)
         logger.info(f"Layer 2 (Classifier) Result: {classification_result}")
         
         # Merge Layer 2 results into entities
@@ -47,7 +67,7 @@ class ParsePipeline:
         entities_dict["group_type"] = classification_result["group_type"]
         
         # 4. Confidence Check
-        confidence, needs_llm = confidence_service.calculate_confidence(
+        confidence, needs_llm = self.confidence_service.calculate_confidence(
             entities=entities_dict, 
             classifier_score=classification_result["confidence"]
         )
@@ -55,7 +75,7 @@ class ParsePipeline:
         
         # --- DATASET FALLBACK LOGIC ---
         destination = entities_dict.get("destination")
-        if destination and data_service.get_destination_data(destination):
+        if destination and self.recommendation_repository.get_destination_data(destination):
             logger.info(f"Destination '{destination}' found in dataset. Bypassing LLM repair.")
             needs_llm = False
         
@@ -63,16 +83,13 @@ class ParsePipeline:
         
         # 5. Layer 3: LLM Repair (Fallback)
         if needs_llm:
-            entities_dict = await llm_service.repair_entities(text, entities_dict, user_profile)
+            entities_dict = await self.llm_service.repair_entities(text, entities_dict, user_profile)
             source = "hybrid | llm"
-            # Even if LLM repairs it, we might keep the confidence score as it was before repair, 
-            # or optionally boost it. For now, keep it to show why it fell back.
         
         # --- DATE CALCULATION LOGIC ---
         time_str = (entities_dict.get("time") or "").lower()
         duration = entities_dict.get("duration_days") or 1
         
-        # Check if user mentioned multiple dates (e.g., "mai đi, mốt về")
         raw_text = text.lower()
         start_date_obj = datetime.date.today()
         
@@ -92,10 +109,8 @@ class ParsePipeline:
         if duration == 1:
             if "ngày mốt" in raw_text or "ngày kia" in raw_text:
                 if "về" in raw_text or "đến" in raw_text:
-                    # If start was "mai" (+1) and return is "mốt" (+2), duration is 2
                     if "ngày mai" in raw_text:
                         duration = 2
-                    # If start was "today" and return is "mốt" (+2), duration is 3
                     else:
                         duration = 3
             elif "ngày kìa" in raw_text:
@@ -116,10 +131,10 @@ class ParsePipeline:
                 entities_dict["travelers"] = 2
             elif "cặp đôi" in group_type or "couple" in group_type:
                 entities_dict["travelers"] = 2
-            elif "gia đình" in group_type:
-                entities_dict["travelers"] = 4 # Default for family
+            elif "gia định" in group_type or "gia đình" in group_type:
+                entities_dict["travelers"] = 4
             else:
-                entities_dict["travelers"] = 2 # Global default
+                entities_dict["travelers"] = 2
 
         # 6. Build Response
         response = ParseResponse(
