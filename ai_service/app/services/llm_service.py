@@ -10,64 +10,9 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+from app.application.prompts.prompt_registry import prompt_registry
+
 class LLMService:
-    SYSTEM_PROMPT = """Bạn là một chuyên gia phân tích dữ liệu du lịch chuyên nghiệp. Nhiệm vụ của bạn là hoàn thiện và sửa lỗi các thông tin trích xuất từ yêu cầu của người dùng.
-
-Dữ liệu đầu vào:
-1. Câu lệnh của người dùng: "{text}"
-2. Dữ liệu đã trích xuất sơ bộ: {entities_json}
-3. Hồ sơ sở thích của người dùng: {user_profile_json}
-
-Quy tắc quan trọng:
-- Budget: Chuyển đổi "tr", "triệu" thành số đầy đủ (VD: 2tr -> 2000000). Luôn trả về số nguyên.
-- Travelers: "đi một mình", "solo" -> 1; "cặp đôi", "người yêu" -> 2; "gia đình" -> 4.
-- Origin: Trích xuất nơi khởi hành (VD: "từ Hà Nội" -> origin: "Hà Nội").
-- Duration: Ưu tiên số ngày (VD: "3 ngày 2 đêm" -> duration_days: 3).
-- Vibe: Xác định phong cách (chill, khám phá, nghỉ dưỡng, sang chảnh...).
-- Gợi ý điểm đến (Vague Query): Nếu người dùng KHÔNG nhập điểm đến (VD: "Tôi muốn đi đâu đó", "Gợi ý cho mình"), hãy dựa vào hồ sơ sở thích để chọn 1 địa điểm phù hợp (BẮT BUỘC phải có tên địa danh cụ thể). Khi đó, hãy đặt `destination_is_suggested: true`. Nếu người dùng CÓ nhập điểm đến, đặt `destination_is_suggested: false`.
-
-Ví dụ:
-Input: "đi đà lạt 3 ngày 2tr chill solo"
-Output: {{"destination": "Đà Lạt", "vibe": "chill", "budget": 2000000, "duration_days": 3, "travelers": 1, "destination_is_suggested": false}}
-
-Input: "đi đâu đó nghỉ dưỡng"
-Output: {{"destination": "Phú Quốc", "vibe": "nghỉ dưỡng", "destination_is_suggested": true}}
-
-Yêu cầu: CHỈ trả về JSON, không giải thích gì thêm."""
-
-    ITINERARY_SYSTEM_PROMPT = """You are a travel planner AI.
-
-Generate a realistic travel itinerary based on user preferences.
-
-Constraints:
-- Be practical and geographically logical
-- Do NOT include impossible travel distances in 1 day
-- Keep activities concise
-- Use real-world style suggestions
-
-Input:
-
-Destination: {destination}
-Duration: {duration_days} days
-Budget: {budget} VND
-Vibe: {vibe}
-Group: {group_type}
-
-Return JSON ONLY:
-
-{{
-  "days": [
-    {{
-      "day": 1,
-      "activities": [
-        "Morning: ...",
-        "Afternoon: ...",
-        "Evening: ..."
-      ]
-    }}
-  ]
-}}"""
-
     def __init__(self):
         # 9Router / Ollama Config
         self.api_key = os.getenv("LLM_API_KEY", "")
@@ -264,7 +209,7 @@ Return JSON ONLY:
             },
             {
                 "role": "user",
-                "content": self.SYSTEM_PROMPT.format(
+                "content": prompt_registry.get_prompt("repair_prompt").content.format(
                     text=text,
                     entities_json=entities_json,
                     user_profile_json=user_profile_json
@@ -300,7 +245,7 @@ Return JSON ONLY:
         """
         logger.info(f"LLM Itinerary Generation triggered for {destination}")
         
-        prompt = self.ITINERARY_SYSTEM_PROMPT.format(
+        prompt = prompt_registry.get_prompt("planner_prompt").content.format(
             destination=destination,
             duration_days=duration_days,
             budget=budget,
