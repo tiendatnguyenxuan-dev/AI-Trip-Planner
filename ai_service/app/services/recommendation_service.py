@@ -1,8 +1,12 @@
 import random
 from typing import Dict, Any, List
-from app.services.data_service import data_service
+from app.infrastructure.repositories.base_recommendation_repository import BaseRecommendationRepository
+from app.infrastructure.repositories.json_recommendation_repository import JSONRecommendationRepository
 
 class RecommendationService:
+    def __init__(self, repository: BaseRecommendationRepository = None):
+        self.repository = repository or JSONRecommendationRepository()
+
     def map_budget_to_price_level(self, budget: int) -> str:
         """Simple mapping of budget to price level."""
         if not budget:
@@ -15,7 +19,7 @@ class RecommendationService:
             return "high"
 
     def get_recommendations(self, destination: str, budget: int, vibe: str) -> Dict[str, List[Dict[str, str]]]:
-        dest_data = data_service.get_destination_data(destination)
+        dest_data = self.repository.get_destination_data(destination)
         if not dest_data:
             return {"places": [], "hotels": []}
 
