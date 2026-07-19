@@ -5,8 +5,9 @@ from datetime import timedelta
 
 from app.models.schemas import ParseResponse, EntityResponse
 from app.shared.context.trip_context import TripContext
-from app.application.repositories.base_recommendation_repository import BaseRecommendationRepository
-from app.infrastructure.repositories.json_recommendation_repository import JSONRecommendationRepository
+from app.application.repositories.base_place_repository import BasePlaceRepository
+from app.infrastructure.repositories.place_repository import PlaceRepository
+from app.infrastructure.providers.static_dataset_provider import StaticDatasetProvider
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class ParsePipeline:
     """
     def __init__(
         self,
-        recommendation_repository: BaseRecommendationRepository = None,
+        recommendation_repository: BasePlaceRepository = None,
         entity_extractor = None,
         intent_service = None,
         classifier_service = None,
@@ -31,7 +32,7 @@ class ParsePipeline:
         from app.services.confidence_service import confidence_service as default_confidence
         from app.services.llm_service import llm_service as default_llm
 
-        self.recommendation_repository = recommendation_repository or JSONRecommendationRepository()
+        self.recommendation_repository = recommendation_repository or PlaceRepository(providers=[StaticDatasetProvider()])
         self.entity_extractor = entity_extractor or default_extractor
         self.intent_service = intent_service or default_intent
         self.classifier_service = classifier_service or default_classifier
@@ -75,7 +76,7 @@ class ParsePipeline:
         
         # --- DATASET FALLBACK LOGIC ---
         destination = entities_dict.get("destination")
-        if destination and self.recommendation_repository.get_destination_data(destination):
+        if destination and self.recommendation_repository.destination_exists(destination):
             logger.info(f"Destination '{destination}' found in dataset. Bypassing LLM repair.")
             needs_llm = False
         

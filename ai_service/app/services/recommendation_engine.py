@@ -1,6 +1,7 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Optional, Dict, Any
 from app.application.repositories.base_place_repository import BasePlaceRepository
 from app.domain.entities.place import Place, Hotel, Restaurant, Attraction, PriceLevel
+from app.models.schemas import CandidatePlaces
 
 class RecommendationEngine:
     """
@@ -17,9 +18,9 @@ class RecommendationEngine:
         budget: Optional[int] = None,
         preferred_tags: Optional[List[str]] = None,
         user_profile: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, List[Place]]:
+    ) -> CandidatePlaces:
         """
-        Retrieves, filters, and ranks candidate places matching criteria.
+        Retrieves, filters, and ranks candidate places matching criteria, returning a CandidatePlaces wrapper.
         """
         # 1. Candidate Retrieval
         hotels = self.place_repository.search_hotels(destination)
@@ -32,7 +33,6 @@ class RecommendationEngine:
         for p in attractions:
             if p.place_id not in seen_attractions:
                 seen_attractions.add(p.place_id)
-                # Ensure we only treat attractions as generic places if they are not hotels/restaurants
                 if p.type in ("attraction", "place"):
                     unique_attractions.append(p)
 
@@ -62,15 +62,14 @@ class RecommendationEngine:
             ranked_hotels = self.ranking_engine.rank(filtered_hotels, preferred_tags, budget)
             ranked_restaurants = self.ranking_engine.rank(filtered_restaurants, preferred_tags, budget)
         else:
-            # Fallback rating sort
             def rating_key(x):
                 return (x.metadata.rating if x.metadata else 0.0) or 0.0
             ranked_attractions = sorted(unique_attractions, key=rating_key, reverse=True)
             ranked_hotels = sorted(filtered_hotels, key=rating_key, reverse=True)
             ranked_restaurants = sorted(filtered_restaurants, key=rating_key, reverse=True)
 
-        return {
-            "places": ranked_attractions,
-            "hotels": ranked_hotels,
-            "restaurants": ranked_restaurants
-        }
+        return CandidatePlaces(
+            places=ranked_attractions,
+            hotels=ranked_hotels,
+            restaurants=ranked_restaurants
+        )

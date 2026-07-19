@@ -89,6 +89,21 @@
       "destination": "Vũng Tàu",
       "vibe": "chill",
       "budget": 2000000
+    },
+    {
+      "destination": "Đà Lạt",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Nha Trang",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Vũng Tàu",
+      "vibe": "chill",
+      "budget": 2000000
     }
   ]
 }

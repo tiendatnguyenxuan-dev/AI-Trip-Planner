@@ -1,5 +1,5 @@
 from typing import Dict, Any, Optional
-from app.models.schemas import ParseResponse, RecommendationResponse, ItineraryResponse
+from app.models.schemas import ParseResponse, RecommendationResponse, ItineraryResponse, CandidatePlaces
 
 class TripContext:
     """
@@ -20,3 +20,4 @@ class TripContext:
         self.metadata: Dict[str, Any] = {}
         self.execution_metrics: Dict[str, Any] = {}
         self.validation_result: Optional[Any] = None
+        self.candidate_places: Optional[CandidatePlaces] = None

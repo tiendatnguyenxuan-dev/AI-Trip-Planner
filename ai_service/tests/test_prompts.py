@@ -11,7 +11,8 @@ def test_prompt_rendering_success():
         duration_days=3,
         budget=2000000,
         vibe="chill",
-        group_type="couple"
+        group_type="couple",
+        candidate_places="Mock Attractions"
     )
     assert "Destination: Nha Trang" in rendered
     assert "Duration: 3 days" in rendered
@@ -25,7 +26,8 @@ def test_prompt_rendering_validation_failure():
             duration_days=3,
             budget=2000000,
             vibe="chill",
-            group_type="couple"
+            group_type="couple",
+            candidate_places="Mock Attractions"
         )
     assert "Missing required variables" in str(excinfo.value)
 
@@ -38,7 +40,8 @@ def test_prompt_rendering_empty_or_null_failure():
             duration_days=3,
             budget=2000000,
             vibe="chill",
-            group_type="couple"
+            group_type="couple",
+            candidate_places="Mock Attractions"
         )
     assert "cannot be null or empty" in str(excinfo.value)
 

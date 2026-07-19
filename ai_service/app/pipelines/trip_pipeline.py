@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, Any, List, Optional
 from app.models.schemas import TripPlanResponse, RecommendationResponse, ItineraryResponse
 from app.shared.context.trip_context import TripContext
 
@@ -7,10 +8,10 @@ logger = logging.getLogger(__name__)
 class TripPipeline:
     """
     Orchestration pipeline executing sequential travel planning nodes.
+    Supports Validation, Automatic Repair, and V2 Response Model compilation.
     """
-    def __init__(self, nodes=None):
+    def __init__(self, nodes=None, validation_service=None, repair_service=None):
         if nodes is None:
-            # Fallback for backward-compatibility with singleton imports
             from app.shared.di import container
             nodes = [
                 container.fetch_user_node,
@@ -21,6 +22,8 @@ class TripPipeline:
                 container.history_node
             ]
         self.nodes = nodes
+        self.validation_service = validation_service
+        self.repair_service = repair_service
 
     async def execute(self, context: TripContext) -> TripPlanResponse:
         logger.info(f"--- Trip Planning Execution Started ---")
@@ -41,12 +44,50 @@ class TripPipeline:
         itinerary = context.itinerary or ItineraryResponse(days=[])
         personalized = context.metadata.get("personalized", False)
         
+        # --- Validation & Repair Stage ---
+        val_summary = {"is_valid": True, "errors": [], "warnings": []}
+        if context.itinerary and context.candidate_places and self.validation_service:
+            budget_limit = entities.budget if entities and entities.budget else 5_000_000
+            val_res = self.validation_service.validate_itinerary(
+                context.itinerary, context.candidate_places, budget_limit
+            )
+            if not val_res["is_valid"] and self.repair_service:
+                logger.info("Validation failed. Attempting automatic itinerary repair...")
+                repaired = self.repair_service.repair_itinerary(
+                    context.itinerary, val_res["errors"], context.candidate_places
+                )
+                context.itinerary = repaired
+                val_res = self.validation_service.validate_itinerary(
+                    context.itinerary, context.candidate_places, budget_limit
+                )
+            val_summary = val_res
+
+        # --- V2 Response Metadata ---
+        places_meta = []
+        if context.candidate_places:
+            for p in context.candidate_places.places:
+                places_meta.append(p.dict())
+            for h in context.candidate_places.hotels:
+                places_meta.append(h.dict())
+            for r in context.candidate_places.restaurants:
+                places_meta.append(r.dict())
+
+        trip_meta = {
+            "destination": entities.destination if entities else None,
+            "duration_days": entities.duration_days if entities else 1,
+            "budget": entities.budget if entities else None,
+            "vibe": entities.vibe if entities else None
+        }
+        
         return TripPlanResponse(
             intent=intent,
             entities=entities,
             recommendations=recommendations,
-            itinerary=itinerary,
-            personalized=personalized
+            itinerary=context.itinerary,
+            personalized=personalized,
+            trip=trip_meta,
+            validation_summary=val_summary,
+            places_metadata=places_meta
         )
 
 trip_pipeline = TripPipeline()
