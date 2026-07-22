@@ -33,10 +33,15 @@ class ParseResponse(BaseModel):
 class PlaceItem(BaseModel):
     name: str
     type: str
+    score: Optional[float] = None
+    reason: Optional[str] = None
+    matched_tags: List[str] = Field(default_factory=list)
 
 class HotelItem(BaseModel):
     name: str
     price_level: str
+    score: Optional[float] = None
+    reason: Optional[str] = None
 
 class RecommendationResponse(BaseModel):
     places: List[PlaceItem]
@@ -49,10 +54,22 @@ class DailyItinerary(BaseModel):
 class ItineraryResponse(BaseModel):
     days: List[DailyItinerary]
 
-#Output đầy đủ khi gọi /plan-trip (cả lịch trình)
 class TripPlanResponse(BaseModel):
     intent: str
     entities: EntityResponse
     recommendations: RecommendationResponse
     itinerary: ItineraryResponse
     personalized: bool = False
+    
+    # V2 optional fields
+    trip: Optional[Dict[str, Any]] = None
+    validation_summary: Optional[Dict[str, Any]] = None
+    places_metadata: Optional[List[Dict[str, Any]]] = None
+
+from app.domain.entities.place import Place, Hotel, Restaurant
+
+class CandidatePlaces(BaseModel):
+    places: List[Place]
+    hotels: List[Hotel]
+    restaurants: List[Restaurant]
+

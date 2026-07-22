@@ -1,14 +1,15 @@
 import re
 from typing import Dict, Any, Optional, List
-from app.application.repositories.base_recommendation_repository import BaseRecommendationRepository
-from app.infrastructure.repositories.json_recommendation_repository import JSONRecommendationRepository
+from app.application.repositories.base_place_repository import BasePlaceRepository
+from app.infrastructure.repositories.place_repository import PlaceRepository
+from app.infrastructure.providers.static_dataset_provider import StaticDatasetProvider
 
 class EntityExtractor:
     """
     Service extracting travel entities from text using regex lookup based on dataset keys.
     """
-    def __init__(self, recommendation_repository: BaseRecommendationRepository = None):
-        self.recommendation_repository = recommendation_repository or JSONRecommendationRepository()
+    def __init__(self, recommendation_repository: BasePlaceRepository = None):
+        self.recommendation_repository = recommendation_repository or PlaceRepository(providers=[StaticDatasetProvider()])
         self.dest_lookup = {}
         
         # Load destinations dynamically from JSON keys (loaded via repository)

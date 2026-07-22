@@ -4,7 +4,7 @@ from typing import List
 
 class PlannerPrompt(BasePrompt):
     """
-    Prompt used for generating a structured travel itinerary.
+    Prompt used for generating a structured travel itinerary using only verified candidate places.
     """
     @property
     def name(self) -> str:
@@ -17,14 +17,14 @@ class PlannerPrompt(BasePrompt):
     @property
     def config(self) -> PromptConfig:
         return PromptConfig(
-            temperature=0.2,
+            temperature=0.1,
             max_tokens=4000,
             provider="default"
         )
 
     @property
     def required_variables(self) -> List[str]:
-        return ["destination", "duration_days", "budget", "vibe", "group_type"]
+        return ["destination", "duration_days", "budget", "vibe", "group_type", "candidate_places"]
 
     @property
     def content(self) -> str:
@@ -32,14 +32,16 @@ class PlannerPrompt(BasePrompt):
 
 Generate a realistic travel itinerary based on user preferences.
 
-Constraints:
-- Be practical and geographically logical
-- Do NOT include impossible travel distances in 1 day
-- Keep activities concise
-- Use real-world style suggestions
+CRITICAL RULES:
+- Use ONLY the provided candidate places, hotels, and restaurants listed below.
+- Do NOT invent or include any fictional or other real-world attractions, hotels, or restaurants that are not in the provided candidates list.
+- If there are no candidate places provided, suggest generic activities (e.g. 'Khám phá tự do', 'Đi dạo tự do') without inventing specific names.
+- Be practical and geographically logical.
+
+Candidate Places to choose from:
+{candidate_places}
 
 Input:
-
 Destination: {destination}
 Duration: {duration_days} days
 Budget: {budget} VND
@@ -54,6 +56,7 @@ Return JSON ONLY:
       "day": 1,
       "activities": [
         "Morning: ...",
+        "Lunch: ...",
         "Afternoon: ...",
         "Evening: ..."
       ]

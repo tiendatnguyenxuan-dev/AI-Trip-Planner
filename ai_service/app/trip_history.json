@@ -89,6 +89,63 @@
       "destination": "Vũng Tàu",
       "vibe": "chill",
       "budget": 2000000
+    },
+    {
+      "destination": "Đà Lạt",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Nha Trang",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Vũng Tàu",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Đà Lạt",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Nha Trang",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Đà Lạt",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Đà Lạt",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Nha Trang",
+      "vibe": "chill",
+      "budget": 2000000
+    },
+    {
+      "destination": "Đà Lạt",
+      "vibe": "chill",
+      "budget": 2000000
+    }
+  ],
+  "user_test_til": [
+    {
+      "destination": "Đà Lạt",
+      "vibe": null,
+      "budget": 3000000
+    },
+    {
+      "destination": "Đà Lạt",
+      "vibe": null,
+      "budget": 3000000
     }
   ]
 }

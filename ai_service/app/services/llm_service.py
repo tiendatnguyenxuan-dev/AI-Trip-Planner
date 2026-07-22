@@ -3,7 +3,7 @@ import json
 import re
 import httpx
 import os
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -66,11 +66,21 @@ class LLMService:
             
         return repaired
 
-    async def generate_itinerary(self, destination: str, duration_days: int, budget: int, vibe: str, group_type: str) -> Dict[str, Any]:
+    async def generate_itinerary(
+        self,
+        destination: str,
+        duration_days: int,
+        budget: int,
+        vibe: str,
+        group_type: str,
+        candidate_places: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """
-        Use LLM to generate a full travel itinerary.
+        Use LLM to generate a full travel itinerary using candidate places.
         """
         logger.info(f"LLM Itinerary Generation triggered for {destination}")
+        
+        cand_str = "\n".join([f"- {name}" for name in (candidate_places or [])]) if candidate_places else "None provided."
         
         prompt_obj = prompt_registry.get_prompt("planner_prompt")
         prompt = prompt_obj.render(
@@ -78,7 +88,8 @@ class LLMService:
             duration_days=duration_days,
             budget=budget,
             vibe=vibe,
-            group_type=group_type
+            group_type=group_type,
+            candidate_places=cand_str
         )
         
         messages = [
