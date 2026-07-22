@@ -8,6 +8,11 @@ class PriceLevel(str, Enum):
     EXPENSIVE = "EXPENSIVE"
     ULTRA_LUXURY = "ULTRA_LUXURY"
 
+class BusinessStatus(str, Enum):
+    OPERATIONAL = "OPERATIONAL"
+    CLOSED_TEMPORARILY = "CLOSED_TEMPORARILY"
+    CLOSED_PERMANENTLY = "CLOSED_PERMANENTLY"
+
 class Coordinates(BaseModel):
     latitude: float
     longitude: float
@@ -30,6 +35,13 @@ class Media(BaseModel):
     videos: List[str] = Field(default_factory=list)
     thumbnails: List[str] = Field(default_factory=list)
 
+class ProvenanceInfo(BaseModel):
+    primary_provider: str
+    merged_providers: List[str] = Field(default_factory=list)
+    merged_sources: Dict[str, str] = Field(default_factory=dict) # provider_name -> external_id
+    confidence_score: float = 1.0
+    last_synced_at: Optional[str] = None
+
 class Metadata(BaseModel):
     rating: Optional[float] = None
     review_count: Optional[int] = None
@@ -38,6 +50,14 @@ class Metadata(BaseModel):
     price_level: Optional[PriceLevel] = None
     opening_hours: Optional[OpeningHours] = None
     media: Optional[Media] = None
+    
+    # Phase 4 Rich Real World Metadata attributes
+    phone_number: Optional[str] = None
+    website_url: Optional[str] = None
+    editorial_summary: Optional[str] = None
+    business_status: Optional[BusinessStatus] = BusinessStatus.OPERATIONAL
+    wheelchair_accessible: Optional[bool] = None
+    provenance: Optional[ProvenanceInfo] = None
 
 class Place(BaseModel):
     place_id: str
