@@ -7,6 +7,15 @@ from app.infrastructure.providers.static_dataset_provider import StaticDatasetPr
 from app.infrastructure.providers.openstreetmap_provider import OpenStreetMapProvider
 from app.infrastructure.providers.google_places_provider import GooglePlacesProvider
 
+# Travel Intelligence Layer Providers
+from app.infrastructure.providers.static_destination_resolver import StaticDestinationResolver
+from app.infrastructure.providers.haversine_route_engine import HaversineRouteEngine
+from app.infrastructure.providers.static_weather_engine import StaticWeatherEngine
+from app.infrastructure.providers.standard_budget_engine import StandardBudgetEngine
+from app.infrastructure.providers.greedy_timeline_optimizer import GreedyTimelineOptimizer
+from app.infrastructure.providers.in_memory_knowledge_graph import InMemoryKnowledgeGraph
+from app.infrastructure.providers.in_memory_telemetry import InMemoryTelemetryCollector
+
 from app.infrastructure.gateways.ollama_gateway import OllamaGateway
 from app.infrastructure.gateways.openai_gateway import OpenAIGateway
 
@@ -24,12 +33,14 @@ from app.services.recommendation_engine import RecommendationEngine
 from app.services.ranking_engine import RankingEngine
 from app.services.validation_service import ValidationService
 from app.services.repair_service import RepairService
+from app.services.travel_intelligence_service import TravelIntelligenceService
 
 from app.pipelines.parse_pipeline import ParsePipeline
 from app.application.nodes.fetch_user_node import FetchUserNode
 from app.application.nodes.parse_node import ParseNode
 from app.application.nodes.personalization_node import PersonalizationNode
 from app.application.nodes.recommendation_node import RecommendationNode
+from app.application.nodes.travel_intelligence_node import TravelIntelligenceNode
 from app.application.nodes.planning_node import PlanningNode
 from app.application.nodes.history_node import HistoryNode
 
@@ -53,6 +64,15 @@ class Container:
             self.osm_provider,
             self.google_provider
         ])
+
+        # Configure Travel Intelligence Layer Providers
+        self.destination_resolver = StaticDestinationResolver()
+        self.route_engine = HaversineRouteEngine()
+        self.weather_engine = StaticWeatherEngine()
+        self.budget_engine = StandardBudgetEngine()
+        self.timeline_optimizer = GreedyTimelineOptimizer()
+        self.knowledge_graph = InMemoryKnowledgeGraph()
+        self.telemetry_collector = InMemoryTelemetryCollector()
 
         # 2. LLM Gateway selection
         provider = os.getenv("LLM_PROVIDER", "ollama").lower()
@@ -85,6 +105,17 @@ class Container:
         self.validation_service = ValidationService()
         self.repair_service = RepairService()
 
+        # Travel Intelligence Orchestration Service
+        self.travel_intelligence_service = TravelIntelligenceService(
+            destination_resolver=self.destination_resolver,
+            route_engine=self.route_engine,
+            weather_engine=self.weather_engine,
+            budget_engine=self.budget_engine,
+            timeline_optimizer=self.timeline_optimizer,
+            knowledge_graph=self.knowledge_graph,
+            telemetry=self.telemetry_collector
+        )
+
         # 4. Pipelines
         self.parse_pipeline = ParsePipeline(
             recommendation_repository=self.place_repository,
@@ -100,7 +131,11 @@ class Container:
         self.parse_node = ParseNode(parse_pipeline=self.parse_pipeline)
         self.personalization_node = PersonalizationNode(personalization_service=self.personalization_service)
         self.recommendation_node = RecommendationNode(recommendation_engine=self.recommendation_engine)
-        self.planning_node = PlanningNode(itinerary_service=self.itinerary_service)
+        self.travel_intelligence_node = TravelIntelligenceNode(intelligence_service=self.travel_intelligence_service)
+        self.planning_node = PlanningNode(
+            itinerary_service=self.itinerary_service,
+            timeline_optimizer=self.timeline_optimizer
+        )
         self.history_node = HistoryNode(history_service=self.history_service, user_service=self.user_service)
 
         # 6. Orchestration Pipeline
@@ -111,6 +146,7 @@ class Container:
                 self.parse_node,
                 self.personalization_node,
                 self.recommendation_node,
+                self.travel_intelligence_node,
                 self.planning_node,
                 self.history_node
             ],

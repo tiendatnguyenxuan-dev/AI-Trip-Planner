@@ -1,13 +1,14 @@
 from app.application.nodes.base_node import BaseNode
 from app.shared.context.trip_context import TripContext
-from app.models.schemas import ItineraryResponse
+from app.models.schemas import ItineraryResponse, DailyItinerary
 
 class PlanningNode(BaseNode):
     """
-    Generates a day-by-day travel itinerary using only candidates.
+    Generates a day-by-day travel itinerary using candidates and Travel Intelligence Layer context.
     """
-    def __init__(self, itinerary_service):
+    def __init__(self, itinerary_service, timeline_optimizer=None):
         self.itinerary_service = itinerary_service
+        self.timeline_optimizer = timeline_optimizer
 
     @property
     def name(self) -> str:
@@ -22,8 +23,33 @@ class PlanningNode(BaseNode):
         if not destination:
             context.itinerary = ItineraryResponse(days=[])
             return
+
+        # Attempt deterministic timeline generation if Travel Intelligence context exists
+        if context.travel_intelligence and self.timeline_optimizer and context.candidate_places:
+            days = []
+            dur_days = entities.duration_days or 1
+            places = context.candidate_places.places
             
-        # Compile candidate place names to restrict LLM inventory
+            for d in range(1, dur_days + 1):
+                optimized_acts = await self.timeline_optimizer.optimize_daily_timeline(
+                    day_number=d,
+                    candidate_places=places,
+                    route_matrix=context.travel_intelligence.route_matrix,
+                    weather=context.travel_intelligence.weather_forecast[0] if context.travel_intelligence.weather_forecast else None
+                )
+                
+                activities_str = []
+                for act in optimized_acts:
+                    activities_str.append(
+                        f"[{act.suggested_start_time} - {act.suggested_end_time}] {act.place_name} "
+                        f"(Transit: {act.transit_from_previous_mins}m, {act.distance_from_previous_km}km)"
+                    )
+                days.append(DailyItinerary(day=d, activities=activities_str if activities_str else ["Khám phá tự do"]))
+            
+            context.itinerary = ItineraryResponse(days=days)
+            return
+
+        # Fallback to LLM / Standard Itinerary service
         cand_names = []
         candidates = context.candidate_places
         if candidates:
