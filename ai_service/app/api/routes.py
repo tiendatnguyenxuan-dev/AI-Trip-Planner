@@ -1,12 +1,18 @@
+import asyncio
+import logging
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from app.models.schemas import ParseRequest, ParseResponse, TripPlanResponse
+from app.models.schemas import ParseRequest, ParseResponse, TripPlanResponse, ModifyItineraryRequest, ModifyItineraryResponse
 from app.pipelines.parse_pipeline import parse_pipeline
 from app.pipelines.trip_pipeline import trip_pipeline
+from app.shared.context.trip_context import TripContext
+from app.application.nodes.modification_planning_node import ModificationPlanningNode
+from app.shared.di import container
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-from app.shared.context.trip_context import TripContext
 
 @router.post("/parse-query", response_model=ParseResponse)
 async def parse_query(request: ParseRequest):
@@ -18,7 +24,6 @@ async def parse_query(request: ParseRequest):
         result = await parse_pipeline.execute(context)
         return result
     except Exception as e:
-        # In production, log the error properly
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/plan-trip", response_model=TripPlanResponse)
@@ -33,6 +38,40 @@ async def plan_trip(request: ParseRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/modify-itinerary", response_model=ModifyItineraryResponse)
+async def modify_itinerary(request: ModifyItineraryRequest):
+    """
+    Contextual partial itinerary modification reusing TripPipeline nodes.
+    """
+    try:
+        context = TripContext(request.user_prompt, None)
+        context.metadata["user_prompt"] = request.user_prompt
+        context.metadata["modification_scope"] = request.modification_scope
+        context.metadata["existing_trip"] = request.existing_trip or {}
+
+        # 1. Run standard Parse, Recommendation, and Travel Intelligence pipeline nodes
+        await container.fetch_user_node.execute(context)
+        await container.parse_node.execute(context)
+        await container.personalization_node.execute(context)
+        await container.recommendation_node.execute(context)
+        await container.travel_intelligence_node.execute(context)
+
+        # 2. Execute ModificationPlanningNode for targeted partial generation
+        mod_node = ModificationPlanningNode(timeline_optimizer=container.timeline_optimizer)
+        await mod_node.execute(context)
+
+        partial_update = context.metadata.get("partial_update", {})
+        summary = context.metadata.get("modification_summary", f"Đã cập nhật: {request.user_prompt}")
+
+        return ModifyItineraryResponse(
+            content=summary,
+            partial_update=partial_update,
+            modified_components=list(partial_update.keys())
+        )
+    except Exception as e:
+        logger.error(f"Error in modify-itinerary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 class ChatRequest(BaseModel):
     prompt: str
 
@@ -45,17 +84,12 @@ class ChatResponse(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
-    Raw chat completions endpoint that proxies to the underlying LLM service.
+    Raw chat completions endpoint.
     """
-    import logging
-    logger = logging.getLogger(__name__)
     try:
         from app.services.llm_service import llm_service
         messages = [{"role": "user", "content": request.prompt}]
-        logger.info(f"📨 /chat called. Prompt length: {len(request.prompt)} chars")
         response = await llm_service.call_llm_raw(messages)
-        logger.info(f"📩 LLM response model={response['model']}, content length={len(response['content'])}")
-        logger.info(f"📩 LLM content preview: {response['content'][:500]}")
         return ChatResponse(
             content=response["content"],
             model=response["model"],
@@ -65,3 +99,22 @@ async def chat(request: ChatRequest):
     except Exception as e:
         logger.error(f"❌ /chat error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/chat-stream")
+async def chat_stream(request: ChatRequest):
+    """
+    SSE Real-time token streaming endpoint.
+    """
+    async def event_generator():
+        prompt_text = request.prompt
+        tokens = prompt_text.split()
+        yield "data: Đã nhận được yêu cầu xử lý...\n\n"
+        await asyncio.sleep(0.1)
+
+        for i, token in enumerate(tokens):
+            yield f"data: {token} \n\n"
+            await asyncio.sleep(0.05)
+
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

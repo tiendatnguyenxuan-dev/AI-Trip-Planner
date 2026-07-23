@@ -415,4 +415,62 @@ public class PersistenceMapper {
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
+
+    // Conversation mapping
+    public ConversationEntity toEntity(Conversation domain) {
+        if (domain == null) return null;
+        ConversationEntity entity = ConversationEntity.builder()
+                .id(domain.getId())
+                .userId(domain.getUserId())
+                .tripId(domain.getTripId())
+                .build();
+        if (domain.getMessages() != null) {
+            entity.setMessages(domain.getMessages().stream()
+                    .map(msg -> toEntity(msg, entity))
+                    .collect(Collectors.toList()));
+        }
+        return entity;
+    }
+
+    public Conversation toDomain(ConversationEntity entity) {
+        if (entity == null) return null;
+        Conversation domain = Conversation.builder()
+                .id(entity.getId())
+                .userId(entity.getUserId())
+                .tripId(entity.getTripId())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+        if (entity.getMessages() != null) {
+            domain.setMessages(entity.getMessages().stream()
+                    .map(this::toDomain)
+                    .collect(Collectors.toList()));
+        }
+        return domain;
+    }
+
+    // ConversationMessage mapping
+    public ConversationMessageEntity toEntity(ConversationMessage domain, ConversationEntity parent) {
+        if (domain == null) return null;
+        return ConversationMessageEntity.builder()
+                .id(domain.getId())
+                .conversation(parent)
+                .role(domain.getRole())
+                .content(domain.getContent())
+                .metadataJson(domain.getMetadataJson())
+                .timestamp(domain.getTimestamp() != null ? domain.getTimestamp() : java.time.LocalDateTime.now())
+                .build();
+    }
+
+    public ConversationMessage toDomain(ConversationMessageEntity entity) {
+        if (entity == null) return null;
+        return ConversationMessage.builder()
+                .id(entity.getId())
+                .conversationId(entity.getConversation() != null ? entity.getConversation().getId() : null)
+                .role(entity.getRole())
+                .content(entity.getContent())
+                .metadataJson(entity.getMetadataJson())
+                .timestamp(entity.getTimestamp())
+                .build();
+    }
 }

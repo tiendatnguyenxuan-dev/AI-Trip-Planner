@@ -17,13 +17,13 @@ FluidConcierge là một hệ thống ứng dụng lập kế hoạch du lịch 
                         │    (FluidConcierge)     │
                         └────────────┬────────────┘
                                      │
-                                     ▼
+                                     ▼ (REST / SSE Streaming)
                         ┌─────────────────────────┐
                         │   Java Spring Boot      │
-                        │   Core API Service      │
+                        │  AI Orchestration Layer │
                         │     (tripplanner)       │
                         └────────────┬────────────┘
-                                     │ (HTTP REST / WebClient)
+                                     │ (HTTP REST / Resilient WebClient)
                                      ▼
                         ┌─────────────────────────┐
                         │   Python FastAPI        │
@@ -36,47 +36,53 @@ FluidConcierge là một hệ thống ứng dụng lập kế hoạch du lịch 
 
 ## ⚙️ Chi Tiết Các Thành Phần Microservices
 
-### 1. 🐍 Python AI Microservice (`ai_service`)
-Đảm nhận phân tích ngôn ngữ tự nhiên, gợi ý địa điểm, tính toán ma trận khoảng cách địa lý và lập lịch trình du lịch khả thi. Được thiết kế theo chuẩn **Clean Architecture** qua 4 giai đoạn tiến hóa:
-
-- **Phase 1: Clean Architecture & Pipeline Nodes**
-  - Tách rời giao diện FastAPI, Business Logic, và LLM Gateway (`OpenAIGateway`, `OllamaGateway`).
-  - Quản lý luồng xử lý qua các Pipeline Nodes: `FetchUserNode`, `ParseNode`, `PersonalizationNode`, `RecommendationNode`, `TravelIntelligenceNode`, `PlanningNode`, `HistoryNode`.
-  - Quản lý phụ thuộc qua Composition Root Container (`di.py`).
-
-- **Phase 2: Recommendation & Ranking Engine**
-  - Trích xuất địa điểm theo các danh mục: Attractions, Hotels, Restaurants.
-  - Chấm điểm kết hợp (Ranking Engine): Đánh giá rating, số lượng review, mức độ phù hợp tag/vibe và sở thích người dùng.
-  - Bộ kiểm tra & tự động sửa lỗi (Validation & Automatic Repair Loop) đảm bảo lịch trình không vượt ngân sách.
-
-- **Phase 3: Travel Intelligence Layer (TIL)**
-  - **Destination Resolution:** Chuẩn hóa tên địa danh, sửa lỗi chính tả & aliases ("Saigon", "TPHCM", "HCMC") về `DestinationEntity`.
-  - **Geographic Distance Matrix:** Tính toán ma trận khoảng cách (Haversine formula) & thời gian di chuyển giữa các địa điểm theo các phương tiện (`WALKING`, `MOTORBIKE`, `CAR`, `PUBLIC_TRANSIT`).
-  - **Weather Suitability Engine:** Đánh giá thời tiết theo ngày và cảnh báo rủi ro hoạt động ngoài trời.
-  - **Itemized Budget Engine:** Bóc tách dự toán chi tiết cho Ăn ở, Ăn uống, Di chuyển, Vé tham quan.
-  - **Deterministic Timeline Optimization:** Tự động lập lịch trình di chuyển tối ưu khoảng cách (Nearest Neighbor) và thời lượng tham quan thực tế.
-
-- **Phase 4: Real World Data Platform (RWDP)**
-  - **Rich Metadata & Provenance:** Hỗ trợ thông tin mở rộng (số điện thoại, website, bài viết tổng hợp, trạng thái hoạt động) và lưu vết nguồn dữ liệu (`ProvenanceInfo`).
-  - **POI Deduplication & Merge Engine:** Tự động gộp địa điểm trùng lặp từ nhiều nguồn dựa trên khoảng cách tọa độ ($\le 100\text{m}$) và độ tương đồng tên ($\ge 0.85$).
-  - **Multi-Provider Aggregator:** Tổng hợp song song dữ liệu từ Google Places, OpenStreetMap, Wikipedia và Static Dataset fallback.
-  - **Provider Caching Layer:** Bộ nhớ đệm TTL `InMemoryCache` giúp tối ưu tốc độ và chi phí gọi API.
+### 1. ☕ Java Spring Boot AI Orchestration Layer (`tripplanner`)
+Backend Java đóng vai trò trung tâm điều phối AI (AI Orchestrator):
+- **Stateful Conversation Domain:** Lưu trữ lịch sử hội thoại chat (`Conversation`, `ConversationMessage`) theo phiên làm việc của từng chuyến đi.
+- **Prompt Context Builder (`PromptContextBuilder`):** Tổng hợp lịch sử chat + thông tin chuyến đi hiện tại + hồ sơ người dùng + yêu cầu sửa đổi thành ngữ cảnh hoàn chỉnh.
+- **Trip Merge Engine (`TripMergeEngine`):** Tái tạo và cập nhật từng phần của lịch trình (thay đổi 1 nhà hàng, tạo lại Ngày 2, điều chỉnh ngân sách) mà không phải tạo lại toàn bộ chuyến đi.
+- **Resilient WebClient & SSE Streaming:** Quản lý timeout, retry policy và hỗ trợ luồng dữ liệu thời gian thực Server-Sent Events (SSE).
+- **APIs:**
+  - `POST /api/v1/chat`: Bắt đầu/gửi hội thoại chat.
+  - `POST /api/v1/chat/{id}/continue`: Tiếp tục phiên chat.
+  - `POST /api/v1/trips/{id}/modify`: Sửa đổi một phần lịch trình.
+  - `GET /api/v1/chat/{id}/messages`: Lấy lịch sử tin nhắn.
+  - `GET /api/v1/chat/{id}/stream`: Stream dữ liệu câu trả lời AI thời gian thực (SSE).
 
 ---
 
-### 2. ☕ Java Spring Boot Backend (`tripplanner`)
-Đóng vai trò Core Service quản lý dữ liệu người dùng, bài viết, lưu trữ Database và đóng vai trò Gateway giao tiếp với AI Service:
+### 2. 🐍 Python AI Microservice (`ai_service`)
+FastAPI AI Microservice được thiết kế theo chuẩn **Clean Architecture** qua 5 giai đoạn tiến hóa:
 
-- **Quản lý Trips & Daily Itinerary:** CRUD chuyến đi, lịch trình chi tiết từng ngày và lưu vết history.
-- **Integration Client:** Gửi yêu cầu câu hỏi tự nhiên từ Client sang `ai_service` (port 8000) qua `WebClient` / `RestTemplate` và nhận kết quả TripPlanResponse đã qua làm giàu dữ liệu để lưu DB.
-- **Tech Stack:** Java 21, Spring Boot 3.x, Spring Data JPA, H2 / PostgreSQL.
+- **Phase 1: Clean Architecture & Pipeline Nodes**
+  - Tách rời FastAPI routes, Business Logic, và LLM Gateways (`OpenAIGateway`, `OllamaGateway`).
+  - Quản lý luồng qua Pipeline Nodes (`FetchUserNode`, `ParseNode`, `PersonalizationNode`, `RecommendationNode`, `TravelIntelligenceNode`, `PlanningNode`, `HistoryNode`).
+
+- **Phase 2: Recommendation & Ranking Engine**
+  - Trích xuất địa điểm theo danh mục (Attractions, Hotels, Restaurants) & chấm điểm tổng hợp (Ranking Engine).
+  - Bộ kiểm tra & tự động sửa lỗi (Validation & Automatic Repair Loop).
+
+- **Phase 3: Travel Intelligence Layer (TIL)**
+  - `DestinationResolver`: Chuẩn hóa tên địa danh & tọa độ.
+  - `HaversineRouteEngine`: Ma trận khoảng cách $N \times N$ & thời gian di chuyển theo phương tiện.
+  - `StaticWeatherEngine`: Đánh giá thời tiết theo ngày.
+  - `StandardBudgetEngine`: Bóc tách chi phí ăn ở, đi lại, vé tham quan.
+  - `GreedyTimelineOptimizer`: Tự động sắp xếp thời gian tham quan tối ưu địa lý.
+
+- **Phase 4: Real World Data Platform (RWDP)**
+  - `PlaceMergeEngine`: Gộp địa điểm trùng lặp từ nhiều nguồn dựa trên tọa độ ($\le 100\text{m}$) và độ tương đồng tên ($\ge 0.85$).
+  - `ProviderAggregator`: Đa nguồn Google Places, OpenStreetMap, Wikipedia và Static Dataset.
+  - `InMemoryCache`: Bộ nhớ đệm TTL caching.
+
+- **Phase 5: Conversational Planning Node & SSE Streaming**
+  - `ModificationPlanningNode`: Tái sử dụng ngữ cảnh candidate places và ma trận khoảng cách từ `TripPipeline` để tạo lịch trình chỉnh sửa theo yêu cầu.
+  - Endpoint `/ai/modify-itinerary` & `/ai/chat-stream` (StreamingResponse).
 
 ---
 
 ### 3. ⚛️ React TypeScript Frontend (`FluidConcierge`)
-- **UI Framework:** React 18, TypeScript, Tailwind CSS, Material Design 3.
-- **Animations & Icons:** Framer Motion, Lucide React icons.
-- **Tính năng UI:** Nhập yêu cầu du lịch tự nhiên, xem bản đồ & lịch trình chuyến đi theo ngày, chỉnh sửa hoạt động và xem dự toán chi phí.
+- **UI Framework:** React 18, TypeScript, Tailwind CSS, Material Design 3, Framer Motion.
+- **Tính năng UI:** Trò chuyện tương tác với AI Concierge, xem bản đồ & lịch trình theo ngày, sửa đổi từng hoạt động và nhận phản hồi stream thời gian thực.
 
 ---
 
@@ -85,17 +91,20 @@ FluidConcierge là một hệ thống ứng dụng lập kế hoạch du lịch 
 ```text
 Nhom1/
 ├── FluidConcierge/          # React TypeScript Frontend
-├── tripplanner/             # Java 21 Spring Boot Core Backend
+├── tripplanner/             # Java 21 Spring Boot Core AI Orchestrator
+│   ├── src/main/java/com/example/tripplanner/
+│   │   ├── application/     # AiOrchestratorService, PromptContextBuilder, TripMergeEngine
+│   │   ├── domain/          # Conversation, ConversationMessage, Trip models & ports
+│   │   ├── infrastructure/  # JPA Entities, Repositories, Security & WebClient
+│   │   └── interfaces/      # ChatController REST & SSE Streaming APIs
 ├── ai_service/              # Python FastAPI AI Microservice
 │   ├── app/
-│   │   ├── api/             # FastAPI Routes
-│   │   ├── application/     # Pipeline Nodes
+│   │   ├── application/     # Pipeline Nodes (inc. ModificationPlanningNode)
 │   │   ├── domain/          # Entities & Interfaces
-│   │   ├── infrastructure/  # Providers, Gateways, Repositories, Cache
+│   │   ├── infrastructure/  # Real World Data Providers & Route/Weather/Budget Engines
 │   │   ├── pipelines/       # TripPipeline & ParsePipeline
-│   │   ├── services/        # Travel Intelligence & Recommendation Services
-│   │   └── shared/          # Container DI & TripContext
-│   ├── tests/               # Pytest Suite (20 Test Modules)
+│   │   └── services/        # Travel Intelligence & Recommendation Services
+│   ├── tests/               # Pytest Suite (22 Test Modules)
 │   └── main.py              # FastAPI Entrypoint
 └── README.md                # Master Documentation File
 ```
@@ -109,7 +118,7 @@ Nhom1/
 cd ai_service
 python -m venv venv
 
-# Active Virtual Environment:
+# Activate Virtual Environment:
 # Windows:
 .\venv\Scripts\activate
 # Linux/macOS:
@@ -119,7 +128,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-### 2. Khởi chạy Core Backend (Spring Boot - Port 8081)
+### 2. Khởi chạy Core AI Orchestrator (Spring Boot - Port 8081)
 ```bash
 cd tripplanner
 ./mvnw spring-boot:run
@@ -136,7 +145,7 @@ npm run dev
 
 ## 🧪 Automated Testing
 
-Chạy bộ kiểm thử tự động 20 test cases của `ai_service`:
+Chạy bộ kiểm thử tự động của `ai_service`:
 
 ```bash
 cd ai_service
