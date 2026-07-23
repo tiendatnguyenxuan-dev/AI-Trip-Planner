@@ -6,6 +6,9 @@ from app.infrastructure.repositories.place_repository import PlaceRepository
 from app.infrastructure.providers.static_dataset_provider import StaticDatasetProvider
 from app.infrastructure.providers.openstreetmap_provider import OpenStreetMapProvider
 from app.infrastructure.providers.google_places_provider import GooglePlacesProvider
+from app.infrastructure.providers.wikipedia_provider import WikipediaProvider
+from app.infrastructure.providers.place_merge_engine import PlaceMergeEngine
+from app.infrastructure.providers.provider_aggregator import ProviderAggregator
 
 # Travel Intelligence Layer Providers
 from app.infrastructure.providers.static_destination_resolver import StaticDestinationResolver
@@ -50,20 +53,28 @@ class Container:
     Strictly functions as the composition root, wiring dependencies explicitly through constructor injection.
     """
     def __init__(self):
-        # 1. Infrastructure Repositories & Providers
+        # 1. Infrastructure Repositories & Real World Data Platform Providers
         self.user_repository = InMemoryUserRepository()
         self.history_repository = FileHistoryRepository()
         
-        # Configure Place Providers
+        # Configure Providers
         self.static_provider = StaticDatasetProvider()
         self.osm_provider = OpenStreetMapProvider()
         self.google_provider = GooglePlacesProvider()
+        self.wikipedia_provider = WikipediaProvider()
         
-        self.place_repository = PlaceRepository(providers=[
-            self.static_provider,
-            self.osm_provider,
-            self.google_provider
-        ])
+        self.merge_engine = PlaceMergeEngine()
+        self.provider_aggregator = ProviderAggregator(
+            providers=[
+                self.google_provider,
+                self.osm_provider,
+                self.wikipedia_provider,
+                self.static_provider  # Fallback provider
+            ],
+            merge_engine=self.merge_engine
+        )
+        
+        self.place_repository = PlaceRepository(aggregator=self.provider_aggregator)
 
         # Configure Travel Intelligence Layer Providers
         self.destination_resolver = StaticDestinationResolver()

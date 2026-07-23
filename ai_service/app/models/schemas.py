@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, List
 
 #Input nhận từ Java backend (text, user_id)
 class ParseRequest(BaseModel):
-    text: str = Field(..., example="đi đà lạt 3 ngày 2 đêm budget 2tr chill")
+    text: str = Field(..., json_schema_extra={"example": "đi đà lạt 3 ngày 2 đêm budget 2tr chill"})
     user_id: Optional[str] = None
 
 # JSON output chứa các entities
@@ -73,3 +73,15 @@ class CandidatePlaces(BaseModel):
     hotels: List[Hotel]
     restaurants: List[Restaurant]
 
+# --- Phase 5 Conversational Planning Schemas ---
+class ModifyItineraryRequest(BaseModel):
+    user_prompt: str
+    modification_scope: Optional[str] = "GENERAL"
+    conversation_history: Optional[List[Dict[str, str]]] = Field(default_factory=list)
+    existing_trip: Optional[Dict[str, Any]] = None
+    user_profile: Optional[Dict[str, Any]] = None
+
+class ModifyItineraryResponse(BaseModel):
+    content: str
+    partial_update: Optional[Dict[str, Any]] = None
+    modified_components: List[str] = Field(default_factory=list)

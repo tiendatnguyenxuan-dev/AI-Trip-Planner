@@ -1,67 +1,64 @@
 from typing import Optional, List
 from app.application.repositories.base_place_repository import BasePlaceRepository
-from app.application.providers.base_place_provider import BasePlaceProvider
 from app.domain.entities.place import Place, Hotel, Restaurant
+from app.infrastructure.providers.provider_aggregator import ProviderAggregator
+from app.infrastructure.cache.in_memory_cache import memory_cache
 
 class PlaceRepository(BasePlaceRepository):
     """
-    Concrete implementation of BasePlaceRepository.
-    Aggregates and merges results from multiple registered BasePlaceProviders.
+    Concrete implementation of BasePlaceRepository wrapping ProviderAggregator and ProviderCache.
+    Supports backward compatibility with providers list initialization.
     """
-    def __init__(self, providers: List[BasePlaceProvider]):
-        self.providers = providers
+    def __init__(self, aggregator: Optional[ProviderAggregator] = None, providers: Optional[List] = None, cache=None):
+        if aggregator is None and providers is not None:
+            aggregator = ProviderAggregator(providers=providers)
+        elif aggregator is None:
+            from app.infrastructure.providers.static_dataset_provider import StaticDatasetProvider
+            aggregator = ProviderAggregator(providers=[StaticDatasetProvider()])
+
+        self.aggregator = aggregator
+        self.cache = cache or memory_cache
 
     def find_place_by_id(self, place_id: str) -> Optional[Place]:
-        for provider in self.providers:
-            place = provider.find_place_by_id(place_id)
-            if place:
-                return place
-        return None
+        cache_key = f"place:id:{place_id}"
+        cached = self.cache.get(cache_key)
+        if cached:
+            return cached
+
+        place = self.aggregator.find_place_by_id(place_id)
+        if place:
+            self.cache.set(cache_key, place, ttl_seconds=600)
+        return place
 
     def search_places(self, query: str, destination: Optional[str] = None) -> List[Place]:
-        merged = []
-        seen_ids = set()
-        for provider in self.providers:
-            try:
-                places = provider.search_places(query, destination)
-                for p in places:
-                    if p.place_id not in seen_ids:
-                        seen_ids.add(p.place_id)
-                        merged.append(p)
-            except Exception:
-                pass
-        return merged
+        cache_key = f"place:search:{destination}:{query}"
+        cached = self.cache.get(cache_key)
+        if cached:
+            return cached
+
+        places = self.aggregator.search_places(query, destination)
+        self.cache.set(cache_key, places, ttl_seconds=300)
+        return places
 
     def search_hotels(self, destination: str) -> List[Hotel]:
-        merged = []
-        seen_ids = set()
-        for provider in self.providers:
-            try:
-                hotels = provider.search_hotels(destination)
-                for h in hotels:
-                    if h.place_id not in seen_ids:
-                        seen_ids.add(h.place_id)
-                        merged.append(h)
-            except Exception:
-                pass
-        return merged
+        cache_key = f"hotel:search:{destination}"
+        cached = self.cache.get(cache_key)
+        if cached:
+            return cached
+
+        hotels = self.aggregator.search_hotels(destination)
+        self.cache.set(cache_key, hotels, ttl_seconds=300)
+        return hotels
 
     def search_restaurants(self, destination: str) -> List[Restaurant]:
-        merged = []
-        seen_ids = set()
-        for provider in self.providers:
-            try:
-                rests = provider.search_restaurants(destination)
-                for r in rests:
-                    if r.place_id not in seen_ids:
-                        seen_ids.add(r.place_id)
-                        merged.append(r)
-            except Exception:
-                pass
-        return merged
+        cache_key = f"restaurant:search:{destination}"
+        cached = self.cache.get(cache_key)
+        if cached:
+            return cached
+
+        rests = self.aggregator.search_restaurants(destination)
+        self.cache.set(cache_key, rests, ttl_seconds=300)
+        return rests
 
     def destination_exists(self, destination: str) -> bool:
-        for provider in self.providers:
-            if provider.destination_exists(destination):
-                return True
-        return False
+        return self.aggregator.destination_exists(destination)
