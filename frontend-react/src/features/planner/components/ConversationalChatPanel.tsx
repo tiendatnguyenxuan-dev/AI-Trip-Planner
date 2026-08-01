@@ -211,18 +211,16 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
               className={`flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
             >
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                  isUser ? 'bg-sky-600 text-white' : 'bg-sky-100 text-sky-600 border border-sky-200'
-                }`}
+                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isUser ? 'bg-sky-600 text-white' : 'bg-sky-100 text-sky-600 border border-sky-200'
+                  }`}
               >
                 {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
               </div>
               <div
-                className={`max-w-[82%] p-3 rounded-2xl leading-relaxed text-sm ${
-                  isUser
+                className={`max-w-[82%] p-3 rounded-2xl leading-relaxed text-sm ${isUser
                     ? 'bg-sky-600 text-white rounded-tr-none shadow-sm font-medium'
                     : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none shadow-sm font-medium'
-                }`}
+                  }`}
               >
                 {msg.content}
                 {msg.isCompleted && (

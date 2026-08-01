@@ -95,7 +95,7 @@ const Explore: React.FC = () => {
     const previousExplore = selectedExploreItem ? { ...selectedExploreItem } : null;
 
     // Update local state optimistically
-    const updateList = (list: SharedContentResponse[]) => 
+    const updateList = (list: SharedContentResponse[]) =>
       list.map(item => {
         if (item.id === id) {
           const newCount = isLike ? item.totalVotes + 1 : Math.max(0, item.totalVotes - 1);
@@ -113,20 +113,20 @@ const Explore: React.FC = () => {
       }
       return item;
     }));
-    
+
     if (selectedDetailItem?.id === id) {
-      setSelectedDetailItem(prev => prev ? { 
-        ...prev, 
-        hasUpvoted: isLike, 
-        totalVotes: isLike ? prev.totalVotes + 1 : Math.max(0, prev.totalVotes - 1) 
+      setSelectedDetailItem(prev => prev ? {
+        ...prev,
+        hasUpvoted: isLike,
+        totalVotes: isLike ? prev.totalVotes + 1 : Math.max(0, prev.totalVotes - 1)
       } : null);
     }
-    
+
     if (selectedExploreItem?.id === id) {
-      setSelectedExploreItem(prev => prev ? { 
-        ...prev, 
-        hasUpvoted: isLike, 
-        totalVotes: isLike ? (prev.totalVotes || 0) + 1 : Math.max(0, (prev.totalVotes || 0) - 1) 
+      setSelectedExploreItem(prev => prev ? {
+        ...prev,
+        hasUpvoted: isLike,
+        totalVotes: isLike ? (prev.totalVotes || 0) + 1 : Math.max(0, (prev.totalVotes || 0) - 1)
       } : null);
     }
 
@@ -296,10 +296,10 @@ const Explore: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <AnimatePresence mode='popLayout'>
                 {filteredItems.map(item => (
-                  <ExploreCard 
-                    key={item.id} 
-                    item={item} 
-                    onClick={handleExploreCardClick} 
+                  <ExploreCard
+                    key={item.id}
+                    item={item}
+                    onClick={handleExploreCardClick}
                     onUpvote={(id, isLike) => handleRate(id, isLike)}
                   />
                 ))}
@@ -415,7 +415,7 @@ const Explore: React.FC = () => {
               </div>
               <h3 className="text-2xl font-black text-emerald-950 dark:text-emerald-50 mb-4 font-display">Sắp ra mắt!</h3>
               <p className="text-emerald-900/60 dark:text-emerald-50/60 font-medium mb-8">
-                Tính năng chia sẻ trải nghiệm trực tiếp đang được hoàn thiện. 
+                Tính năng chia sẻ trải nghiệm trực tiếp đang được hoàn thiện.
                 Vui lòng quay lại sau nhé!
               </p>
               <button

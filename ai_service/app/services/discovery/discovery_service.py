@@ -8,28 +8,25 @@ from app.models.discovery_schemas import (
     DestinationDiscoveryContext
 )
 from app.services.discovery.destination_resolver import DestinationResolver
-from app.services.media.media_discovery_service import MediaDiscoveryService
-from app.services.media.media_ranking_engine import MediaRankingEngine
+from app.services.discovery.media_engine import MediaEngine
 
 logger = logging.getLogger(__name__)
 
 class DestinationDiscoveryService:
     """
-    Orchestrates interactive destination discovery, map context creation, POIs, weather, and social media discovery.
+    Orchestrates interactive destination discovery, map context creation, POIs, and media.
     """
 
     def __init__(self):
         self.resolver = DestinationResolver()
-        self.media_discovery_service = MediaDiscoveryService()
-        self.media_ranking_engine = MediaRankingEngine()
+        self.media_engine = MediaEngine()
 
     def discover(self, query: str) -> DestinationDiscoveryContext:
         # 1. Resolve Destination
         dest: DestinationInfo = self.resolver.resolve(query)
         
-        # 2. Discover & Rank Social Media Items (Phase 8)
-        raw_media = self.media_discovery_service.discover_media(dest.canonical_name, limit=10)
-        ranked_media = self.media_ranking_engine.rank(raw_media, dest.canonical_name, top_n=5)
+        # 2. Discover Media
+        media_items = self.media_engine.discover_media(dest)
 
         # 3. Create Sample POIs & Map Markers
         pois = [
@@ -78,14 +75,14 @@ class DestinationDiscoveryService:
                 category=p["category"]
             ))
 
-        for m in ranked_media:
+        for m in media_items:
             markers.append(MapMarker(
                 id=m.id,
                 title=m.title,
                 type="MEDIA",
-                lat=dest.lat + 0.004,
-                lng=dest.lng + 0.004,
-                thumbnail=m.thumbnail_url
+                lat=m.lat,
+                lng=m.lng,
+                thumbnail=m.thumbnail
             ))
 
         map_context = MapContext(
@@ -106,7 +103,7 @@ class DestinationDiscoveryService:
             destination=dest,
             map_context=map_context,
             pois=pois,
-            media_items=ranked_media,
+            media_items=media_items,
             weather=WeatherInfo(),
             recommendations_preview=pois[:2],
             conversation_suggestions=suggestions
