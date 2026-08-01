@@ -9,8 +9,6 @@ import Itinerary from './pages/Itinerary.tsx';
 import Places from './pages/admin/Places.tsx';
 import Users from './pages/admin/Users.tsx';
 import Community from './pages/admin/Community.tsx';
-import Login from './pages/Login.tsx';
-import Register from './pages/Register.tsx';
 import ActivitySelection from './pages/ActivitySelection.tsx';
 import ProtectedRoute from './components/auth/ProtectedRoute.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';

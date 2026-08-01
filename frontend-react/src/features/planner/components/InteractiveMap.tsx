@@ -11,12 +11,24 @@ interface InteractiveMapProps {
 
 const DESTINATION_COORDS: Record<string, [number, number]> = {
   'đà lạt': [11.9404, 108.4583],
+  'bà rịa - vũng tàu': [10.3460, 107.0843],
+  'vũng tàu': [10.3460, 107.0843],
   'đà nẵng': [16.0544, 108.2022],
   'hồ chí minh': [10.7769, 106.7009],
   'sài gòn': [10.7769, 106.7009],
   'hà nội': [21.0285, 105.8542],
   'phú quốc': [10.2899, 103.9840],
-  'nha trang': [12.2388, 109.1967]
+  'nha trang': [12.2388, 109.1967],
+  'hội an': [15.8801, 108.3380],
+  'sa pa': [22.3364, 103.8438],
+  'côn đảo': [8.6833, 106.6000],
+  'mũi né': [10.9333, 108.2833],
+  'phan thiết': [10.9333, 108.1000],
+  'quy nhơn': [13.7550, 109.1768],
+  'ninh bình': [20.2506, 105.9745],
+  'huế': [16.4637, 107.5909],
+  'cần thơ': [10.0452, 105.7469],
+  'hạ long': [20.9500, 107.0833]
 };
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
@@ -32,6 +44,29 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const destKey = destinationName.toLowerCase().trim();
   const defaultCenter: [number, number] = DESTINATION_COORDS[destKey] || [11.9404, 108.4583];
+
+  // Dynamic flyTo for any destination (cache + online Nominatim fallback)
+  useEffect(() => {
+    if (!destinationName || !mapRef.current) return;
+
+    const destKey = destinationName.toLowerCase().trim();
+    if (DESTINATION_COORDS[destKey]) {
+      const coords = DESTINATION_COORDS[destKey];
+      mapRef.current.flyTo(coords, 13, { animate: true, duration: 1.5 });
+    } else {
+      // Dynamic OpenStreetMap Geocoding for any custom place worldwide
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destinationName)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.length > 0 && mapRef.current) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+            mapRef.current.flyTo([lat, lng], 13, { animate: true, duration: 1.5 });
+          }
+        })
+        .catch((err) => console.warn('Geocoding error in map:', err));
+    }
+  }, [destinationName]);
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -70,8 +105,29 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       polylineRef.current = null;
     }
 
-    if (!activities || activities.length === 0) return;
+    if (!activities || activities.length === 0) {
+      const centerIcon = L.divIcon({
+        className: 'custom-map-center-pin',
+        html: `
+          <div class="relative flex items-center justify-center cursor-pointer">
+            <div class="w-10 h-10 rounded-full bg-sky-500/30 animate-ping absolute"></div>
+            <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 border-2 border-white text-white flex items-center justify-center shadow-xl z-10">
+              <span class="material-symbols-outlined text-lg">location_on</span>
+            </div>
+          </div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
 
+      const centerMarker = L.marker(defaultCenter, { icon: centerIcon }).addTo(map);
+      centerMarker.bindPopup(`<div class="font-bold text-xs p-1">Điểm đến: ${destinationName}</div>`);
+      markersRef.current['center'] = centerMarker;
+      return;
+    }
+
+    // Only draw polyline if activities are real itinerary stops (not default sample)
+    const isCustomItinerary = activities.some((a) => !a.id.startsWith('default_'));
     const points: [number, number][] = [];
 
     activities.forEach((act, index) => {
@@ -101,22 +157,18 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
 
       const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+      marker.bindPopup(`<div class="font-bold text-xs p-1">${act.name}</div>`);
       marker.on('click', () => onSelectActivity(act));
       markersRef.current[act.id] = marker;
     });
 
-    if (points.length > 1) {
+    if (isCustomItinerary && points.length > 1) {
       polylineRef.current = L.polyline(points, {
         color: '#6366f1',
         weight: 4,
         opacity: 0.8,
         dashArray: '8, 8'
       }).addTo(map);
-    }
-
-    if (points.length > 0) {
-      const bounds = L.latLngBounds(points);
-      map.fitBounds(bounds, { padding: [50, 50] });
     }
   }, [activities, selectedActivityId, destinationName]);
 
@@ -132,7 +184,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       <div ref={mapContainerRef} className="w-full h-full z-0" />
       <div className="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 text-xs text-slate-200 flex items-center gap-2">
         <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        Interactive Route Map ({activities.length} Đợt di chuyển)
+        Bản đồ Tương tác • <span className="capitalize font-bold text-emerald-300">{destinationName}</span>
       </div>
     </div>
   );

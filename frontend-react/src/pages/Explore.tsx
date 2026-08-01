@@ -17,16 +17,6 @@ import SharedContentDetailModal from '../components/explore/SharedContentDetailM
 import ExploreDetailModal from '../components/explore/ExploreDetailModal';
 import ImageLightbox from '../components/explore/ImageLightbox';
 
-import { HERO_BGS } from '../constants';
-import type { ActivityResponse } from '../types/trip';
-
-const DEFAULT_EXPLORE_ACTIVITIES: ActivityResponse[] = [
-  { id: '1', itineraryId: '1', name: 'Chợ Đêm Đà Lạt', description: 'Trải nghiệm ẩm thực đêm và mua sắm nông sản', location: 'Chợ Đêm Đà Lạt, Phường 1', startTime: '19:00:00', endTime: '22:00:00', cost: 200000, activityOrder: 1 },
-  { id: '2', itineraryId: '1', name: 'Hồ Xuân Hương', description: 'Đi dạo quanh hồ và ngắm bình minh tươi mát', location: 'Hồ Xuân Hương, Phường 1', startTime: '07:00:00', endTime: '09:00:00', cost: 50000, activityOrder: 2 },
-  { id: '3', itineraryId: '1', name: 'Thung Lũng Tình Yêu', description: 'Tham quan cảnh quan thiên nhiên và ngàn hoa', location: 'Thung Lũng Tình Yêu, Phường 8', startTime: '09:30:00', endTime: '12:00:00', cost: 250000, activityOrder: 3 },
-  { id: '4', itineraryId: '1', name: 'Quán Cà Phê Horizon', description: 'Thưởng thức cà phê với tầm nhìn thung lũng thông', location: 'Quán Cà Phê Horizon, Phường 3', startTime: '14:00:00', endTime: '16:30:00', cost: 120000, activityOrder: 4 },
-];
-
 const Explore: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -35,8 +25,6 @@ const Explore: React.FC = () => {
   const [selectedTripToShare, setSelectedTripToShare] = useState<TripResponse | null>(null);
 
   const [selectedMapActivityId, setSelectedMapActivityId] = useState<string | null>(null);
-  const [currentHeroBg, setCurrentHeroBg] = useState(0);
-
   const [selectedDetailItem, setSelectedDetailItem] = useState<SharedContentResponse | null>(null);
   const [selectedExploreItem, setSelectedExploreItem] = useState<ExploreItem | null>(null);
   const [showComingSoon, setShowComingSoon] = useState(false);
@@ -45,13 +33,7 @@ const Explore: React.FC = () => {
   const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentHeroBg((prev) => (prev + 1) % HERO_BGS.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
+  const [activeDestination, setActiveDestination] = useState<string>('Đà Lạt');
   const [trendingTrips, setTrendingTrips] = useState<SharedContentResponse[]>([]);
   const [hotActivities, setHotActivities] = useState<SharedContentResponse[]>([]);
   const [allItems, setAllItems] = useState<ExploreItem[]>([]);
@@ -208,16 +190,16 @@ const Explore: React.FC = () => {
                   <span className="material-symbols-outlined text-sky-600 font-bold text-xl">map</span>
                   <h3 className="text-base font-bold text-slate-900 font-display">Bản đồ Trải nghiệm Tương tác</h3>
                 </div>
-                <span className="text-xs text-sky-700 font-bold bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
-                  Đà Lạt • 4 Điểm đến HOT
+                <span className="text-xs text-sky-700 font-bold bg-sky-50 px-3 py-1 rounded-full border border-sky-200 capitalize">
+                  {activeDestination} • 4 Điểm đến HOT
                 </span>
               </div>
               <div className="flex-1 w-full relative min-h-0 rounded-2xl overflow-hidden shadow-sm border border-slate-200">
                 <InteractiveMap
-                  activities={DEFAULT_EXPLORE_ACTIVITIES}
+                  activities={[]}
                   selectedActivityId={selectedMapActivityId}
                   onSelectActivity={(act) => setSelectedMapActivityId(act.id)}
-                  destinationName="đà lạt"
+                  destinationName={activeDestination}
                 />
               </div>
             </div>
@@ -234,7 +216,7 @@ const Explore: React.FC = () => {
                 </span>
               </div>
               <div className="flex-1 min-h-0">
-                <ConversationalChatPanel />
+                <ConversationalChatPanel onDestinationChanged={(dest) => setActiveDestination(dest)} />
               </div>
             </div>
           </div>

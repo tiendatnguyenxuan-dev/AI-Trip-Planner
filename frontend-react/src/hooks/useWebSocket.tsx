@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
-import { Client, type StompSubscription } from '@stomp/stompjs';
+import * as StompJs from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
 interface WebSocketContextType {
   isConnected: boolean;
-  subscribe: (destination: string, callback: (message: any) => void) => StompSubscription | null;
+  subscribe: (destination: string, callback: (message: any) => void) => any;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -19,16 +19,18 @@ const getAuthToken = () => {
 
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
-  const clientRef = useRef<Client | null>(null);
+  const clientRef = useRef<any>(null);
 
   useEffect(() => {
     const token = getAuthToken();
     if (!token) return;
 
-    // Tránh tạo nhiều client nếu effect chạy lại (Strict Mode)
     if (clientRef.current) return;
 
-    const client = new Client({
+    const StompClient = (StompJs as any).Client || (StompJs as any).default?.Client;
+    if (!StompClient) return;
+
+    const client = new StompClient({
       webSocketFactory: () => new SockJS(import.meta.env.VITE_WS_URL || 'http://localhost:8090/ws'),
       connectHeaders: {
         Authorization: `Bearer ${token}`,
@@ -48,7 +50,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       console.log('Disconnected from WebSocket');
     };
 
-    client.onStompError = (frame) => {
+    client.onStompError = (frame: any) => {
       console.error('Broker reported error: ' + frame.headers['message']);
     };
 
@@ -67,10 +69,14 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const subscribe = useCallback((
     destination: string,
     callback: (message: any) => void
-  ): StompSubscription | null => {
+  ): any => {
     if (!clientRef.current || !clientRef.current.connected) return null;
-    return clientRef.current.subscribe(destination, (msg) => {
-      callback(JSON.parse(msg.body));
+    return clientRef.current.subscribe(destination, (msg: any) => {
+      try {
+        callback(JSON.parse(msg.body));
+      } catch (e) {
+        callback(msg.body);
+      }
     });
   }, []);
 

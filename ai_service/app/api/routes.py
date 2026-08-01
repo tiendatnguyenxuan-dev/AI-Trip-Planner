@@ -5,7 +5,9 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from app.models.schemas import ParseRequest, ParseResponse, TripPlanResponse, ModifyItineraryRequest, ModifyItineraryResponse
 from app.models.conversational_schemas import ConversationalPlanRequest, ConversationalPlanResponse
+from app.models.discovery_schemas import DiscoverRequest, DiscoverResponse
 from app.services.conversational.conversation_manager import conversation_manager
+from app.services.discovery.discovery_service import discovery_service
 from app.pipelines.parse_pipeline import parse_pipeline
 from app.pipelines.trip_pipeline import trip_pipeline
 from app.shared.context.trip_context import TripContext
@@ -15,6 +17,19 @@ from app.shared.di import container
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+@router.post("/discover-destination", response_model=DiscoverResponse)
+async def discover_destination(request: DiscoverRequest):
+    """
+    Phase 6 Destination Discovery Experience Endpoint.
+    Resolves destination coordinates, map markers, media, weather, and POIs.
+    """
+    try:
+        discovery_ctx = discovery_service.discover(request.query)
+        return DiscoverResponse(discovery_context=discovery_ctx)
+    except Exception as e:
+        logger.error(f"Error in /discover-destination: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/conversational-plan", response_model=ConversationalPlanResponse)
 async def conversational_plan(request: ConversationalPlanRequest):

@@ -16,11 +16,13 @@ interface Message {
 interface ConversationalChatPanelProps {
   tripId?: string;
   onTripUpdated?: (updatedTrip: TripResponse, modifiedComponents: string[]) => void;
+  onDestinationChanged?: (destName: string) => void;
 }
 
 export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = ({
   tripId,
-  onTripUpdated
+  onTripUpdated,
+  onDestinationChanged
 }) => {
   const navigate = useNavigate();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -34,10 +36,15 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
   ]);
   const [inputPrompt, setInputPrompt] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
 
   useEffect(() => {
@@ -71,6 +78,11 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
       const data = response.data;
       if (data.session_id) setSessionId(data.session_id);
       if (data.progress !== undefined) setProgress(Math.round(data.progress * 100));
+
+      // Check resolved destination and trigger map animation
+      if (data.trip_draft?.destination?.value && onDestinationChanged) {
+        onDestinationChanged(data.trip_draft.destination.value);
+      }
 
       const isCompleted = data.state === 'COMPLETED' || !!data.itinerary;
       const assistantContent = data.message || 'Đã nhận được thông tin của bạn.';
@@ -178,7 +190,7 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-sm">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-3 pr-1 text-sm">
         {messages.map((msg) => {
           const isUser = msg.role === 'user';
           return (
@@ -220,7 +232,6 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
             AI đang phân tích và cập nhật lịch trình...
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <form onSubmit={handleSendMessage} className="mt-3 flex items-center gap-2 pt-2 border-t border-slate-200">
