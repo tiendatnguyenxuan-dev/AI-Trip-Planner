@@ -14,26 +14,24 @@ import TripCardSkeleton from '../components/dashboard/TripCardSkeleton';
 
 // ── Main component ──────────────────────────────────────────────────────────
 
+import { TEST_USER_ID } from '../types/trip';
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedTripToShare, setSelectedTripToShare] = useState<TripResponse | null>(null);
 
+  const currentUserId = user?.id || TEST_USER_ID;
+
   const { data: trips = [], isLoading: loading, isError, error } = useQuery({
-    queryKey: ['trips', user?.id],
-    queryFn: () => tripApi.getAll(user!.id),
-    enabled: !!user?.id,
+    queryKey: ['trips', currentUserId],
+    queryFn: () => tripApi.getAll(currentUserId),
+    enabled: true,
   });
 
-  // Filter only planned/finalized trips
-  const plannedTrips = trips.filter(
-    (t) =>
-      t.status === 'GENERATED' ||
-      t.status === 'CONFIRMED' ||
-      t.status === 'PLANNING' ||
-      (t.itineraries && t.itineraries.length > 0)
-  );
+  // Display all trips created by current or guest user
+  const plannedTrips = trips;
 
   useEffect(() => {
     if (isError && error) {

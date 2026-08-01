@@ -11,6 +11,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   isCompleted?: boolean;
+  createdTripId?: string;
 }
 
 interface ConversationalChatPanelProps {
@@ -31,7 +32,7 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
     {
       id: '1',
       role: 'assistant',
-      content: 'Chào bạn! Tôi là FluidConcierge AI. Bạn đang muốn đi du lịch ở đâu tiếp theo?'
+      content: 'Chào bạn! Tôi là TienDat. Bạn đang muốn đi du lịch ở đâu tiếp theo?'
     }
   ]);
   const [inputPrompt, setInputPrompt] = useState('');
@@ -86,15 +87,7 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
 
       const isCompleted = data.state === 'COMPLETED' || !!data.itinerary;
       const assistantContent = data.message || 'Đã nhận được thông tin của bạn.';
-
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: assistantContent,
-        isCompleted
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
+      let createdTripId: string | undefined = undefined;
 
       if (isCompleted) {
         // Auto-save completed trip to Spring Boot Backend DB for My Trips
@@ -104,7 +97,7 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
           const duration = draft.duration_days?.value || 3;
           const budget = draft.budget?.value || 5000000;
 
-          await tripApi.create({
+          const createdTrip = await tripApi.create({
             userId: TEST_USER_ID,
             title: `Lịch trình AI: ${dest} (${duration} ngày)`,
             destination: dest,
@@ -112,10 +105,29 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
             endDate: new Date(Date.now() + duration * 86400000).toISOString().split('T')[0],
             budget
           });
+
+          if (createdTrip && createdTrip.id) {
+            createdTripId = createdTrip.id;
+            try {
+              await tripApi.generate(createdTrip.id);
+            } catch (genErr) {
+              console.warn('Trip plan generation call error:', genErr);
+            }
+          }
         } catch (saveErr) {
           console.warn('Auto-save trip to database error:', saveErr);
         }
       }
+
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: assistantContent,
+        isCompleted,
+        createdTripId
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
 
       if (data.itinerary && onTripUpdated) {
         onTripUpdated(data.itinerary as any, []);
@@ -214,13 +226,22 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
               >
                 {msg.content}
                 {msg.isCompleted && (
-                  <button
-                    onClick={() => navigate('/my-trips')}
-                    className="mt-3 w-full py-2.5 px-4 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-base">map</span>
-                    Xem lịch trình đã tạo tại My Trips ➔
-                  </button>
+                  <div className="mt-3 space-y-2">
+                    <button
+                      onClick={() => navigate(msg.createdTripId ? `/itinerary/${msg.createdTripId}` : '/my-trips')}
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">map</span>
+                      Xem Lịch trình chi tiết ngay ➔
+                    </button>
+                    <button
+                      onClick={() => navigate('/my-trips')}
+                      className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">folder_open</span>
+                      Quản lý tại My Trips
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
