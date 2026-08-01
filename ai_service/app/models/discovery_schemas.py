@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
+from app.domain.media.media_item import MediaItem
 
 class DestinationInfo(BaseModel):
     destination_id: str
@@ -26,21 +27,6 @@ class MapContext(BaseModel):
     zoom: int
     bounds: Dict[str, float] = Field(default_factory=dict)
     markers: List[MapMarker] = Field(default_factory=list)
-
-class MediaItem(BaseModel):
-    id: str
-    title: str
-    creator: str
-    provider: str  # "youtube" | "tiktok" | "instagram"
-    thumbnail: str
-    video_url: str
-    duration_seconds: Optional[int] = 180
-    lat: float
-    lng: float
-    related_place_id: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
-    popularity_score: float = 0.9
-    published_at: Optional[str] = None
 
 class WeatherInfo(BaseModel):
     temp_c: int = 28
