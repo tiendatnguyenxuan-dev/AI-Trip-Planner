@@ -46,9 +46,9 @@ export default function PlanTrip() {
 
   // Handle incoming state from Explore page
   useEffect(() => {
-    const state = location.state as { 
-      destination?: string; 
-      durationDays?: number; 
+    const state = location.state as {
+      destination?: string;
+      durationDays?: number;
       tags?: string[];
       budget?: number;
     };
@@ -57,7 +57,7 @@ export default function PlanTrip() {
       if (state.destination) setDestination(state.destination);
       if (state.tags) {
         // Map explore tags to TravelStyles
-        const validStyles = state.tags.filter(t => 
+        const validStyles = state.tags.filter(t =>
           TRAVEL_STYLES.includes(t as TravelStyle)
         ) as TravelStyle[];
         if (validStyles.length > 0) setSelectedStyles(validStyles);
@@ -84,7 +84,7 @@ export default function PlanTrip() {
     setError(null);
     try {
       const result = await aiApi.parseTrip(aiDescription);
-      
+
       if (result.destination) {
         // Only overwrite destination if the field is currently empty or if the parsed destination is explicitly requested (not just suggested by AI)
         if (!destination || !result.destinationIsSuggested) {
@@ -95,7 +95,7 @@ export default function PlanTrip() {
       if (result.startDate) setStartDate(result.startDate);
       if (result.endDate) setEndDate(result.endDate);
       if (result.travelers) setTravelers(result.travelers);
-      
+
       if (result.budgetTier) {
         if (result.budgetTier === 'budget') setBudgetSlider(1);
         else if (result.budgetTier === 'standard') setBudgetSlider(2);
@@ -339,7 +339,7 @@ export default function PlanTrip() {
                 </div>
               </div>
             </div>
-            
+
             {(startDate && endDate) && (
               <div className="mt-4 flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-lg border border-primary/10 w-fit">
                 <span className="material-symbols-outlined text-primary text-sm">info</span>
@@ -413,11 +413,10 @@ export default function PlanTrip() {
                       key={style.text}
                       type="button"
                       onClick={() => toggleStyle(style.text)}
-                      className={`flex flex-col items-center gap-3 p-6 rounded-xl border transition-all group ${
-                        isSelected
+                      className={`flex flex-col items-center gap-3 p-6 rounded-xl border transition-all group ${isSelected
                           ? 'border-primary bg-primary/5'
                           : 'border-outline-variant/20 hover:border-primary/50 hover:bg-primary/5'
-                      }`}
+                        }`}
                     >
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center ${style.bgClass}`}>
                         <span className="material-symbols-outlined">{style.icon}</span>

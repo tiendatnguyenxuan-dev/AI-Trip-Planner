@@ -27,22 +27,20 @@ function App() {
         <Toaster position="top-right" reverseOrder={false} />
         <Router>
           <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            {/* Redirect login/register to homepage */}
+            <Route path="/login" element={<Navigate to="/" replace />} />
+            <Route path="/register" element={<Navigate to="/" replace />} />
 
-            {/* Protected User Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<UserLayout />}>
-                <Route index element={<Explore />} />
-                <Route path="/my-trips" element={<Dashboard />} />
-                <Route path="/plan" element={<PlanTrip />} />
-                <Route path="/community" element={<CommunityFeed />} />
-                <Route path="/profile" element={<UserProfileView />} />
-                <Route path="/explore" element={<Navigate to="/" replace />} />
-                <Route path="/selection/:id" element={<ActivitySelection />} />
-                <Route path="/itinerary/:id" element={<Itinerary />} />
-              </Route>
+            {/* Public User Routes */}
+            <Route element={<UserLayout />}>
+              <Route index element={<Explore />} />
+              <Route path="/my-trips" element={<Dashboard />} />
+              <Route path="/plan" element={<PlanTrip />} />
+              <Route path="/community" element={<CommunityFeed />} />
+              <Route path="/profile" element={<UserProfileView />} />
+              <Route path="/explore" element={<Navigate to="/" replace />} />
+              <Route path="/selection/:id" element={<ActivitySelection />} />
+              <Route path="/itinerary/:id" element={<Itinerary />} />
             </Route>
 
             {/* Protected Admin Routes */}

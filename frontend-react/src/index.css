@@ -3,29 +3,29 @@
 @config "../tailwind.config.js";
 
 @theme {
-  --color-primary: #10b981; /* Emerald 500 */
-  --color-primary-light: #34d399; /* Emerald 400 */
-  --color-primary-dark: #059669; /* Emerald 600 */
-  --color-secondary: #2dd4bf; /* Teal 400 */
+  --color-primary: #0284c7; /* Sky 600 */
+  --color-primary-light: #38bdf8; /* Sky 400 */
+  --color-primary-dark: #0369a1; /* Sky 700 */
+  --color-secondary: #0d9488; /* Teal 600 */
   --color-accent: #f59e0b; /* Amber 500 */
-  --color-background: #f0fdfa; /* Emerald 50 */
-  --color-surface: #ffffff;
-  --color-text: #064e3b; /* Emerald 900 */
-  --color-text-muted: #065f46; /* Emerald 800 */
+  --color-background: #f8fafc; /* Slate 50 */
+  --color-surface: #ffffff; /* Pure White */
+  --color-text: #0f172a; /* Slate 900 */
+  --color-text-muted: #475569; /* Slate 600 */
   
   /* Legacy/Support aliases */
   --color-cta: var(--color-primary-dark);
   --color-primary-container: var(--color-primary-light);
   
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(226, 232, 240, 0.8);
   --glass-blur: blur(12px);
   
   --font-sans: 'DM Sans', ui-sans-serif, system-ui;
   --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui;
   
-  --shadow-emerald: 0 10px 30px -10px rgba(16, 185, 129, 0.3);
-  --shadow-premium: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+  --shadow-emerald: 0 10px 30px -10px rgba(2, 132, 199, 0.2);
+  --shadow-premium: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
 }
 
 @layer base {

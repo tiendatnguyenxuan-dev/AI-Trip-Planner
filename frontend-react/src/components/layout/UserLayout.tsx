@@ -1,15 +1,9 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { BellNotification } from './BellNotification';
 
 export default function UserLayout() {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const { user } = useAuth();
 
   return (
     <div className="bg-background text-on-surface flex min-h-screen font-body">
@@ -24,16 +18,16 @@ export default function UserLayout() {
           </div>
 
           {/* Center: Navigation */}
-          <nav className="hidden md:flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-full border border-outline-variant/10">
+          <nav className="hidden md:flex items-center bg-slate-100 p-1 rounded-full border border-slate-200">
             <NavLink 
               to="/" 
-              className={({ isActive }) => `px-6 py-1.5 rounded-full text-sm font-medium transition-all ${isActive ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'}`}
+              className={({ isActive }) => `px-6 py-2 rounded-full text-sm font-bold transition-all ${isActive ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Explore
             </NavLink>
             <NavLink 
               to="/my-trips" 
-              className={({ isActive }) => `px-6 py-1.5 rounded-full text-sm font-medium transition-all ${isActive ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'}`}
+              className={({ isActive }) => `px-6 py-2 rounded-full text-sm font-bold transition-all ${isActive ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
               My Trips
             </NavLink>
@@ -49,16 +43,17 @@ export default function UserLayout() {
             </div>
             <div className="flex items-center gap-3 ml-2 pl-4 border-l border-outline-variant/10">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{user?.name || 'User'}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{user?.name || 'Khách'}</p>
                 <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">{user?.role || 'Guest'}</p>
               </div>
-              <button 
-                onClick={handleLogout}
-                className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-95"
-                title="Logout"
+              <NavLink
+                to="/"
+                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition-all shadow-md active:scale-95 flex items-center gap-1 cursor-pointer"
+                title="Đăng nhập"
               >
-                <span className="material-symbols-outlined">logout</span>
-              </button>
+                <span className="material-symbols-outlined text-sm">login</span>
+                Đăng nhập
+              </NavLink>
             </div>
           </div>
         </header>

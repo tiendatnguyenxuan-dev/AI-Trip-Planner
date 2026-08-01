@@ -8,15 +8,24 @@ import { exploreApi, communityApi, tripApi, experienceApi } from '../services/ap
 import type { SharedContentResponse, ExploreItem, TripResponse } from '../types/trip';
 import ShareModal from '../components/ShareModal';
 import ExploreCard from '../components/explore/ExploreCard';
-import FilterBar from '../components/explore/FilterBar';
 import CommunityTripCard from '../components/explore/CommunityTripCard';
 import CommunityActivityCard from '../components/explore/CommunityActivityCard';
+import { InteractiveMap } from '../features/planner/components/InteractiveMap';
+import { ConversationalChatPanel } from '../features/planner/components/ConversationalChatPanel';
 
 import SharedContentDetailModal from '../components/explore/SharedContentDetailModal';
 import ExploreDetailModal from '../components/explore/ExploreDetailModal';
 import ImageLightbox from '../components/explore/ImageLightbox';
 
-import { ALL_TAGS, HERO_BGS } from '../constants';
+import { HERO_BGS } from '../constants';
+import type { ActivityResponse } from '../types/trip';
+
+const DEFAULT_EXPLORE_ACTIVITIES: ActivityResponse[] = [
+  { id: '1', itineraryId: '1', name: 'Chợ Đêm Đà Lạt', description: 'Trải nghiệm ẩm thực đêm và mua sắm nông sản', location: 'Chợ Đêm Đà Lạt, Phường 1', startTime: '19:00:00', endTime: '22:00:00', cost: 200000, activityOrder: 1 },
+  { id: '2', itineraryId: '1', name: 'Hồ Xuân Hương', description: 'Đi dạo quanh hồ và ngắm bình minh tươi mát', location: 'Hồ Xuân Hương, Phường 1', startTime: '07:00:00', endTime: '09:00:00', cost: 50000, activityOrder: 2 },
+  { id: '3', itineraryId: '1', name: 'Thung Lũng Tình Yêu', description: 'Tham quan cảnh quan thiên nhiên và ngàn hoa', location: 'Thung Lũng Tình Yêu, Phường 8', startTime: '09:30:00', endTime: '12:00:00', cost: 250000, activityOrder: 3 },
+  { id: '4', itineraryId: '1', name: 'Quán Cà Phê Horizon', description: 'Thưởng thức cà phê với tầm nhìn thung lũng thông', location: 'Quán Cà Phê Horizon, Phường 3', startTime: '14:00:00', endTime: '16:30:00', cost: 120000, activityOrder: 4 },
+];
 
 const Explore: React.FC = () => {
   const navigate = useNavigate();
@@ -25,9 +34,7 @@ const Explore: React.FC = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedTripToShare, setSelectedTripToShare] = useState<TripResponse | null>(null);
 
-  const [search, setSearch] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [duration, setDuration] = useState<number | null>(null);
+  const [selectedMapActivityId, setSelectedMapActivityId] = useState<string | null>(null);
   const [currentHeroBg, setCurrentHeroBg] = useState(0);
 
   const [selectedDetailItem, setSelectedDetailItem] = useState<SharedContentResponse | null>(null);
@@ -155,19 +162,7 @@ const Explore: React.FC = () => {
     }
   };
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
-  };
-
-  const filteredItems = allItems.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase()) ||
-      item.destination.toLowerCase().includes(search.toLowerCase());
-    const matchesTags = selectedTags.length === 0 || selectedTags.some(t => item.tags.includes(t));
-    const matchesDuration = !duration || item.durationDays === duration;
-    return matchesSearch && matchesTags && matchesDuration;
-  });
+  const filteredItems = allItems;
 
   if (loading) {
     return (
@@ -179,123 +174,85 @@ const Explore: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Hero Header */}
-      <div className="pt-32 pb-48 px-6 relative overflow-hidden bg-emerald-950">
-        {/* Animated Glows */}
-        <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[100%] bg-emerald-500/10 blur-[120px] rounded-full animate-pulse"></div>
-        <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[80%] bg-teal-400/10 blur-[100px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
-
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentHeroBg}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 0.25, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5 }}
-            className="absolute inset-0 bg-cover bg-center mix-blend-overlay"
-            style={{ backgroundImage: `url(${HERO_BGS[currentHeroBg]})` }}
-          />
-        </AnimatePresence>
-
-        {/* Overlay Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/20 via-transparent to-background" />
-
-        <div className="max-w-6xl mx-auto relative z-10 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="inline-block px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-8 backdrop-blur-md"
-          >
-            <span className="text-emerald-400 text-xs font-black uppercase tracking-[0.3em]">AI-Powered Travel Planner</span>
-          </motion.div>
-
+      {/* Hero Title Section */}
+      <div className="pt-14 pb-10 px-6 bg-slate-50 border-b border-slate-200/60 text-center">
+        <div className="max-w-4xl mx-auto">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-7xl font-black text-white tracking-tight mb-8 font-display leading-[1.1]"
+            className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight mb-5 font-display leading-[1.15]"
           >
             Hành trình mới, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Cảm hứng mới.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-indigo-600">Cảm hứng vượt trội.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-emerald-100/70 text-lg md:text-2xl max-w-2xl mx-auto font-sans font-medium mb-12"
+            className="text-slate-600 text-base md:text-xl max-w-2xl mx-auto font-sans font-medium leading-relaxed"
           >
-            Tìm nguồn cảm hứng từ những trải nghiệm độc đáo, được cá nhân hóa bởi trí tuệ nhân tạo.
+            Trải nghiệm lập kế hoạch du lịch thông minh kết hợp trợ lý AI và bản đồ tương tác trực quan.
           </motion.p>
+        </div>
+      </div>
 
-          <div className="max-w-3xl mx-auto relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-emerald-600 group-hover:text-emerald-400 transition-colors text-2xl">search</span>
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && search.trim()) {
-                    navigate('/plan', { state: { destination: search.trim() } });
-                  }
-                }}
-                placeholder="Khám phá điểm đến (vd: Đà Lạt, Phú Quốc...)"
-                className="w-full pl-16 pr-8 py-7 rounded-[2rem] bg-white text-xl shadow-2xl focus:ring-0 transition-all outline-none text-emerald-950 font-sans font-bold placeholder:text-emerald-900/30"
-              />
-              <button
-                onClick={() => search.trim() && navigate('/plan', { state: { destination: search.trim() } })}
-                className="absolute right-3 top-3 bottom-3 px-8 bg-emerald-900 text-emerald-50 rounded-2xl font-black text-sm hover:bg-emerald-800 transition-colors active:scale-95"
-              >
-                Bắt đầu
-              </button>
+      {/* Split Screen Section: Map & AI Bot Chat */}
+      <div className="py-8 px-4 md:px-6 max-w-7xl mx-auto">
+        <div className="bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 rounded-3xl p-4 md:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[600px] lg:h-[650px]">
+            {/* Left Half: Interactive Map */}
+            <div className="h-[480px] lg:h-full flex flex-col min-h-0">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sky-600 font-bold text-xl">map</span>
+                  <h3 className="text-base font-bold text-slate-900 font-display">Bản đồ Trải nghiệm Tương tác</h3>
+                </div>
+                <span className="text-xs text-sky-700 font-bold bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
+                  Đà Lạt • 4 Điểm đến HOT
+                </span>
+              </div>
+              <div className="flex-1 w-full relative min-h-0 rounded-2xl overflow-hidden shadow-sm border border-slate-200">
+                <InteractiveMap
+                  activities={DEFAULT_EXPLORE_ACTIVITIES}
+                  selectedActivityId={selectedMapActivityId}
+                  onSelectActivity={(act) => setSelectedMapActivityId(act.id)}
+                  destinationName="đà lạt"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="mt-8 flex justify-center gap-4 relative z-20">
-            <button
-              onClick={() => {
-                setIsTripSelectorOpen(true);
-              }}
-              className="px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-xl font-bold transition-all flex items-center gap-2 border border-white/20"
-            >
-              <span className="material-symbols-outlined">flight_takeoff</span>
-              Chia sẻ Chuyến đi
-            </button>
-            <button
-              onClick={() => {
-                setShowComingSoon(true);
-              }}
-              className="px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-xl font-bold transition-all flex items-center gap-2 border border-white/20"
-            >
-              <span className="material-symbols-outlined">local_activity</span>
-              Chia sẻ Trải nghiệm
-            </button>
+            {/* Right Half: AI Bot Chat */}
+            <div className="h-[520px] lg:h-full flex flex-col min-h-0">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-500 font-bold text-xl">smart_toy</span>
+                  <h3 className="text-base font-bold text-slate-900 font-display">Trợ lý Bot Chat AI</h3>
+                </div>
+                <span className="text-xs text-amber-700 font-bold bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                  Tư vấn & Lên lịch 24/7
+                </span>
+              </div>
+              <div className="flex-1 min-h-0">
+                <ConversationalChatPanel />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20">
-        <FilterBar
-          tags={ALL_TAGS}
-          selectedTags={selectedTags}
-          onToggleTag={toggleTag}
-          onClear={() => setSelectedTags([])}
-          duration={duration}
-          onDurationChange={setDuration}
-        />
-
-        <div className="mt-16 space-y-16">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 mt-6 relative z-20">
+        <div className="space-y-16">
           {/* Trending Trips Section */}
           {trendingTrips.length > 0 && (
             <section>
               <div className="flex justify-between items-end mb-8">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="material-symbols-outlined text-emerald-500" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-                    <h2 className="text-3xl font-black text-emerald-950 font-display">Trending Trips</h2>
+                    <span className="material-symbols-outlined text-sky-600" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                    <h2 className="text-3xl font-black text-slate-900 font-display">Trending Trips</h2>
                   </div>
-                  <p className="text-emerald-700/70 font-medium">Những chuyến đi truyền cảm hứng nhất từ cộng đồng</p>
+                  <p className="text-slate-600 font-medium">Những chuyến đi truyền cảm hứng nhất từ cộng đồng</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -323,10 +280,10 @@ const Explore: React.FC = () => {
               <div className="flex justify-between items-end mb-8">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="material-symbols-outlined text-orange-500" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
-                    <h2 className="text-3xl font-black text-emerald-950 font-display">Hot Activities</h2>
+                    <span className="material-symbols-outlined text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
+                    <h2 className="text-3xl font-black text-slate-900 font-display">Hot Activities</h2>
                   </div>
-                  <p className="text-emerald-700/70 font-medium">Kinh nghiệm bỏ túi & tips từ người dùng thực tế</p>
+                  <p className="text-slate-600 font-medium">Kinh nghiệm bỏ túi & tips từ người dùng thực tế</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
