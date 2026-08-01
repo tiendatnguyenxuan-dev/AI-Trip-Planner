@@ -23,9 +23,10 @@ export const RemixTripModal: React.FC<RemixTripModalProps> = ({
     try {
       const token = localStorage.getItem('token');
       const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api/v1';
 
       const createRes = await axios.post(
-        'http://localhost:8081/api/v1/trips',
+        `${apiBaseUrl}/trips`,
         {
           userId: TEST_USER_ID,
           title: `Bản nháp: ${sharedContent.description || 'Chuyến đi cộng đồng'}`,
@@ -40,7 +41,7 @@ export const RemixTripModal: React.FC<RemixTripModalProps> = ({
       const newTripId = createRes.data.id;
 
       await axios.post(
-        'http://localhost:8081/api/v1/chat',
+        `${apiBaseUrl}/chat`,
         {
           tripId: newTripId,
           prompt: prompt,

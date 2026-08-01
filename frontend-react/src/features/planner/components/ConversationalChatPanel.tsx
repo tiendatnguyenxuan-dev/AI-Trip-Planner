@@ -55,8 +55,9 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
 
     try {
       const token = localStorage.getItem('token');
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api/v1';
       const response = await axios.post(
-        'http://localhost:8081/api/v1/chat',
+        `${apiBaseUrl}/chat`,
         {
           tripId: tripId || null,
           prompt: userMsgText,

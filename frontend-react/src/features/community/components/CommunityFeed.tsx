@@ -16,10 +16,12 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ onSelectRemixTrip 
   const [loading, setLoading] = useState(true);
   const [activeRemixPost, setActiveRemixPost] = useState<SharedContentResponse | null>(null);
 
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api/v1';
+
   const fetchTrendingPosts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8081/api/v1/community/trending?type=TRIP&limit=10');
+      const response = await axios.get(`${apiBaseUrl}/community/trending?type=TRIP&limit=10`);
       setPosts(response.data || []);
     } catch (err) {
       console.error('Failed to load community posts:', err);
@@ -53,7 +55,7 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ onSelectRemixTrip 
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:8081/api/v1/community/${postId}/rate`,
+        `${apiBaseUrl}/community/${postId}/rate`,
         { stars: 5 },
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );

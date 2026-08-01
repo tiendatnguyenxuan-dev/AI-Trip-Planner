@@ -28,10 +28,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/explore", "/api/v1/explore/**").permitAll()
-                        .requestMatchers("/api/v1/community/trending", "/api/v1/community/explore/**", "/api/v1/community/*/comments", "/api/v1/community/uploads/**", "/api/v1/community/upload").permitAll()
+                        .requestMatchers("/api/v1/chat", "/api/v1/chat/**").permitAll()
+                        .requestMatchers("/api/v1/trips", "/api/v1/trips/**").permitAll()
+                        .requestMatchers("/api/v1/itineraries", "/api/v1/itineraries/**").permitAll()
+                        .requestMatchers("/api/v1/ai/**").permitAll()
+                        .requestMatchers("/api/v1/community", "/api/v1/community/**").permitAll()
                         .requestMatchers("/api/v1/admin/**", "/api/v1/community/admin/**").hasRole("ADMIN")
                         .requestMatchers("/ws/**").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {

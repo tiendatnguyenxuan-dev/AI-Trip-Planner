@@ -20,6 +20,7 @@ export const PublishTripModal: React.FC<PublishTripModalProps> = ({ trip, onClos
 
     try {
       const token = localStorage.getItem('token');
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api/v1';
       const formData = new FormData();
       formData.append('type', 'TRIP');
       formData.append('refId', trip.id);
@@ -29,7 +30,7 @@ export const PublishTripModal: React.FC<PublishTripModalProps> = ({ trip, onClos
       formData.append('cost', (trip.budget || 5000000).toString());
       formData.append('duration', (trip.itineraries ? trip.itineraries.length : 3).toString());
 
-      await axios.post('http://localhost:8081/api/v1/community/share', formData, {
+      await axios.post(`${apiBaseUrl}/community/share`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
