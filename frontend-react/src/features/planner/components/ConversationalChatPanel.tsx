@@ -1,12 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import type { TripResponse } from '../../../types/trip';
+import { tripApi } from '../../../services/api';
+import { TEST_USER_ID } from '../../../types/trip';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  isCompleted?: boolean;
 }
 
 interface ConversationalChatPanelProps {
@@ -18,11 +22,14 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
   tripId,
   onTripUpdated
 }) => {
+  const navigate = useNavigate();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [progress, setProgress] = useState<number>(0);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: 'Chào bạn! Tôi là FluidConcierge AI. Bạn có muốn điều chỉnh nhà hàng, địa điểm hoặc ngân sách cho chuyến đi này không?'
+      content: 'Chào bạn! Tôi là FluidConcierge AI. Bạn đang muốn đi du lịch ở đâu tiếp theo?'
     }
   ]);
   const [inputPrompt, setInputPrompt] = useState('');
@@ -54,44 +61,95 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
     setIsSending(true);
 
     try {
-      const token = localStorage.getItem('token');
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api/v1';
-      const response = await axios.post(
-        `${apiBaseUrl}/chat`,
-        {
-          tripId: tripId || null,
-          prompt: userMsgText,
-          modificationScope: 'GENERAL'
-        },
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        }
-      );
+      // 1. Primary: Call Phase 5 Conversational Plan AI Service (port 8000)
+      const aiServiceUrl = 'http://localhost:8000/ai/conversational-plan';
+      const response = await axios.post(aiServiceUrl, {
+        session_id: sessionId,
+        message: userMsgText
+      });
 
       const data = response.data;
-      const assistantContent = data.message?.content || 'Đã cập nhật lịch trình theo yêu cầu của bạn.';
+      if (data.session_id) setSessionId(data.session_id);
+      if (data.progress !== undefined) setProgress(Math.round(data.progress * 100));
+
+      const isCompleted = data.state === 'COMPLETED' || !!data.itinerary;
+      const assistantContent = data.message || 'Đã nhận được thông tin của bạn.';
 
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: assistantContent
+        content: assistantContent,
+        isCompleted
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
 
-      if (data.trip && onTripUpdated) {
-        onTripUpdated(data.trip, data.modifiedComponents || []);
+      if (isCompleted) {
+        // Auto-save completed trip to Spring Boot Backend DB for My Trips
+        try {
+          const draft = data.trip_draft || {};
+          const dest = draft.destination?.value || 'Điểm đến mới';
+          const duration = draft.duration_days?.value || 3;
+          const budget = draft.budget?.value || 5000000;
+
+          await tripApi.create({
+            userId: TEST_USER_ID,
+            title: `Lịch trình AI: ${dest} (${duration} ngày)`,
+            destination: dest,
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date(Date.now() + duration * 86400000).toISOString().split('T')[0],
+            budget
+          });
+        } catch (saveErr) {
+          console.warn('Auto-save trip to database error:', saveErr);
+        }
       }
-    } catch (error) {
-      console.error('Chat error:', error);
-      setMessages((prev) => [
-        ...prev,
-        {
+
+      if (data.itinerary && onTripUpdated) {
+        onTripUpdated(data.itinerary as any, []);
+      }
+    } catch (primaryError) {
+      console.warn('Phase 5 Conversational AI call failed, falling back to legacy chat API:', primaryError);
+      try {
+        const token = localStorage.getItem('token');
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api/v1';
+        const response = await axios.post(
+          `${apiBaseUrl}/chat`,
+          {
+            tripId: tripId || null,
+            prompt: userMsgText,
+            modificationScope: 'GENERAL'
+          },
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }
+        );
+
+        const data = response.data;
+        const assistantContent = data.message?.content || data.content || 'Đã cập nhật lịch trình theo yêu cầu của bạn.';
+
+        const assistantMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: 'Đã cập nhật một số thông tin lịch trình theo yêu cầu của bạn.'
+          content: assistantContent
+        };
+
+        setMessages((prev) => [...prev, assistantMsg]);
+
+        if (data.trip && onTripUpdated) {
+          onTripUpdated(data.trip, data.modifiedComponents || []);
         }
-      ]);
+      } catch (error) {
+        console.error('Chat error:', error);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: 'Đã xảy ra lỗi kết nối. Vui lòng thử lại!'
+          }
+        ]);
+      }
     } finally {
       setIsSending(false);
     }
@@ -109,9 +167,15 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
               AI Travel Assistant
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             </h3>
-            <p className="text-xs text-slate-500 font-medium">Trò chuyện để chỉnh sửa lịch trình linh hoạt</p>
+            <p className="text-xs text-slate-500 font-medium">Trò chuyện để lên lịch trình linh hoạt</p>
           </div>
         </div>
+
+        {progress > 0 && (
+          <div className="flex items-center gap-1.5 bg-sky-50 border border-sky-200 text-sky-700 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm">
+            <span>Tiến độ: {progress}%</span>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-sm">
@@ -137,6 +201,15 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
                 }`}
               >
                 {msg.content}
+                {msg.isCompleted && (
+                  <button
+                    onClick={() => navigate('/my-trips')}
+                    className="mt-3 w-full py-2.5 px-4 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-base">map</span>
+                    Xem lịch trình đã tạo tại My Trips ➔
+                  </button>
+                )}
               </div>
             </div>
           );

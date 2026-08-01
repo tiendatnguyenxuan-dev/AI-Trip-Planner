@@ -26,6 +26,15 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
 
+  // Filter only planned/finalized trips
+  const plannedTrips = trips.filter(
+    (t) =>
+      t.status === 'GENERATED' ||
+      t.status === 'CONFIRMED' ||
+      t.status === 'PLANNING' ||
+      (t.itineraries && t.itineraries.length > 0)
+  );
+
   useEffect(() => {
     if (isError && error) {
       toast.error(error.message || 'Không thể tải dữ liệu chuyến đi. Vui lòng thử lại!');
@@ -39,45 +48,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="pt-8 px-8 pb-12 max-w-7xl mx-auto font-sans">
-      {/* Hero Section */}
-      <section className="relative mb-16 rounded-3xl overflow-hidden min-h-[320px] flex items-center p-12 bg-emerald-950 shadow-xl">
-        <div
-          className="absolute inset-0 opacity-20 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Hoi_An_Covered_Bridge.jpg/1280px-Hoi_An_Covered_Bridge.jpg')" }}
-        ></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-950 via-emerald-950/70 to-transparent"></div>
-        <div className="relative z-10 max-w-2xl">
-          <h2 className="text-5xl font-bold text-white mb-4 leading-tight font-display">
-            Bạn muốn đi đâu <span className="text-secondary">tiếp theo?</span>
-          </h2>
-          <p className="text-lg text-emerald-100/80 mb-8 font-sans">
-            Sức mạnh AI sẽ giúp bạn lên kế hoạch chuyến đi hoàn hảo. Từ điểm ẩn đến trải nghiệm cao cấp, để chúng tôi lo từng chi tiết.
-          </p>
-          <button
-            id="btn-create-trip"
-            onClick={() => navigate('/plan')}
-            className="group flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-bold shadow-2xl shadow-primary/30 hover:bg-cta transition-all cursor-pointer"
-          >
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-            Tạo chuyến đi mới
-          </button>
-        </div>
-      </section>
-
-      {/* View Toggles */}
-      <div className="flex justify-between items-center mb-12">
-        <h3 className="text-2xl font-bold text-text font-display">Chuyến đi của bạn</h3>
-        <div className="bg-primary/5 p-1 rounded-full flex gap-1 border border-primary/10">
-          <button className="p-2 bg-white dark:bg-slate-700 text-primary rounded-full shadow-sm cursor-pointer">
-            <span className="material-symbols-outlined text-sm">grid_view</span>
-          </button>
-          <button className="p-2 text-text-muted hover:text-text transition-colors cursor-pointer">
-            <span className="material-symbols-outlined text-sm">calendar_month</span>
-          </button>
-          <button className="p-2 text-text-muted hover:text-text transition-colors cursor-pointer">
-            <span className="material-symbols-outlined text-sm">map</span>
-          </button>
+    <div className="pt-8 px-4 md:px-8 pb-12 max-w-7xl mx-auto font-sans">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 font-display">Chuyến đi của tôi</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Quản lý và xem lại tất cả các lịch trình du lịch đã tạo</p>
         </div>
       </div>
 
@@ -87,7 +63,7 @@ export default function Dashboard() {
           [1, 2, 3].map(i => <TripCardSkeleton key={i} />)
         ) : (
           <>
-            {trips.map(trip => (
+            {plannedTrips.map(trip => (
               <div
                 key={trip.id}
                 onClick={() => navigate(`/itinerary/${trip.id}`)}
@@ -148,21 +124,22 @@ export default function Dashboard() {
 
         {/* Add New Trip Skeleton */}
         <div
-          onClick={() => navigate('/plan')}
-          className="group border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center p-8 hover:bg-primary/5 hover:border-primary/40 transition-all cursor-pointer h-full min-h-[400px]"
+          onClick={() => navigate('/')}
+          className="group border-2 border-dashed border-sky-200 rounded-3xl flex flex-col items-center justify-center p-8 hover:bg-sky-50/50 hover:border-sky-400 transition-all cursor-pointer h-full min-h-[350px]"
         >
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all">
-            <span className="material-symbols-outlined text-3xl">add_circle</span>
+          <div className="w-14 h-14 rounded-2xl bg-sky-100 flex items-center justify-center text-sky-600 mb-4 group-hover:scale-110 group-hover:bg-sky-600 group-hover:text-white transition-all shadow-sm">
+            <span className="material-symbols-outlined text-3xl">add</span>
           </div>
-          <h4 className="text-xl font-bold text-text mb-2 font-display">Lên kế hoạch mới</h4>
-          <p className="text-sm text-text-muted text-center max-w-[200px] font-sans">Chia sẻ ước mơ của bạn và AI sẽ lên lộ trình hoàn hảo.</p>
+          <h4 className="text-lg font-bold text-slate-900 mb-1 font-display">Tạo chuyến đi mới</h4>
+          <p className="text-xs text-slate-500 text-center max-w-[200px] font-sans">Khám phá địa điểm & trò chuyện với trợ lý Bot Chat AI.</p>
         </div>
       </div>
 
       {/* Floating Action Button */}
       <button
-        onClick={() => navigate('/plan')}
-        className="fixed bottom-8 right-8 w-14 h-14 bg-cta text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 cursor-pointer"
+        onClick={() => navigate('/')}
+        className="fixed bottom-8 right-8 w-14 h-14 bg-sky-600 hover:bg-sky-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 cursor-pointer"
+        title="Tạo chuyến đi mới"
       >
         <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
       </button>
