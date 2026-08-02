@@ -64,9 +64,6 @@ const ActivitySelection: React.FC = () => {
     }
   };
 
-  const totalCost = candidates
-    .filter(c => selectedIds.has(c.id))
-    .reduce((sum, c) => sum + c.cost, 0);
 
   if (loading) {
     return (
@@ -158,10 +155,6 @@ const ActivitySelection: React.FC = () => {
                     <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                       <span className="material-symbols-outlined">{isSelected ? 'check_circle' : 'explore'}</span>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-text-muted/40 uppercase tracking-widest">Ước tính</p>
-                      <p className="text-sm font-black text-text">{can.cost.toLocaleString()} VND</p>
-                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -214,15 +207,10 @@ const ActivitySelection: React.FC = () => {
             <div className="bg-emerald-950/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-4 shadow-2xl flex items-center justify-between gap-4">
               <div className="flex items-center gap-6 pl-6">
                 <div>
-                  <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Tổng chi phí</p>
+                  <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Địa điểm đã chọn</p>
                   <p className="text-emerald-400 font-black text-2xl">
-                    {totalCost.toLocaleString()} <span className="text-xs font-bold text-emerald-400/60">VND</span>
+                    {selectedIds.size} <span className="text-xs font-bold text-emerald-400/60">Địa điểm</span>
                   </p>
-                </div>
-                <div className="hidden sm:block h-10 w-[1px] bg-white/10"></div>
-                <div className="hidden sm:block">
-                  <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Địa điểm</p>
-                  <p className="text-white font-black text-2xl">{selectedIds.size}</p>
                 </div>
               </div>
 

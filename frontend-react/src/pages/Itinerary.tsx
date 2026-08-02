@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -44,7 +44,13 @@ export default function Itinerary() {
   const trip = data?.trip ?? null;
   const itineraries = data?.itineraries ?? [];
 
-  if (loading) return <LoadingSkeleton />;
+  useEffect(() => {
+    if (trip?.status === 'SELECTING_ACTIVITIES') {
+      navigate(`/selection/${trip.id}`);
+    }
+  }, [trip, navigate]);
+
+  if (loading || trip?.status === 'SELECTING_ACTIVITIES') return <LoadingSkeleton />;
   if (trip?.status === 'GENERATING') return <GeneratingOverlay />;
 
   if (isError || !trip) {

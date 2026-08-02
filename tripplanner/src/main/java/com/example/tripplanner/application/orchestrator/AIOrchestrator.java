@@ -145,7 +145,6 @@ public class AIOrchestrator {
                         "3. All output text (summary, name, description) MUST be entirely in %s language.\n" +
                         "4. You MUST return ONLY valid JSON matching this exact schema:\n" +
                         "{\n" +
-                        "  \"totalEstimatedCost\": <number>,\n" +
                         "  \"recommendedHotels\": [ { \"name\": \"\", \"description\": \"\", \"location\": \"\", \"priceLevel\": \"$$\" } ],\n"
                         +
                         "  \"recommendedRestaurants\": [ { \"name\": \"\", \"description\": \"\", \"location\": \"\", \"priceLevel\": \"$$\" } ],\n"
@@ -154,8 +153,7 @@ public class AIOrchestrator {
                         "    {\n" +
                         "      \"name\": \"<string>\",\n" +
                         "      \"description\": \"<string>\",\n" +
-                        "      \"location\": \"<string>\",\n" +
-                        "      \"cost\": <number> (ALWAYS provide the full amount in VND)\n" +
+                        "      \"location\": \"<string>\"\n" +
                         "    }\n" +
                         "  ]\n" +
                         "}",
@@ -174,13 +172,12 @@ public class AIOrchestrator {
                         +
                         "3. You MUST return ONLY valid JSON matching this exact schema:\n" +
                         "{\n" +
-                        "  \"totalCost\": <number>,\n" +
                         "  \"days\": [\n" +
                         "    {\n" +
                         "      \"dayNumber\": %d,\n" +
                         "      \"summary\": \"<string>\",\n" +
                         "      \"activities\": [\n" +
-                        "        { \"name\": \"\", \"description\": \"\", \"location\": \"\", \"startTime\": \"09:00\", \"endTime\": \"10:30\", \"cost\": <number> (VND) }\n"
+                        "        { \"name\": \"\", \"description\": \"\", \"location\": \"\", \"startTime\": \"09:00\", \"endTime\": \"10:30\" }\n"
                         +
                         "      ]\n" +
                         "    }\n" +

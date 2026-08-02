@@ -92,12 +92,6 @@ export const SyncTimelineView: React.FC<SyncTimelineViewProps> = ({
                       <MapPin className="w-3 h-3 text-rose-400" />
                       {act.location || 'Địa điểm'}
                     </span>
-                    {act.cost > 0 && (
-                      <span className="flex items-center gap-1 text-emerald-400 font-medium">
-                        <DollarSign className="w-3 h-3" />
-                        {act.cost.toLocaleString('vi-VN')} đ
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

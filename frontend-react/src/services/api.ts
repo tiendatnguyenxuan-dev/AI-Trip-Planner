@@ -2,6 +2,7 @@ import axios from 'axios';
 import type {
   TripResponse,
   ItineraryResponse,
+  ImportItineraryDay,
   GenerateResponse,
   CreateTripRequest,
   GenerateRequest,
@@ -137,6 +138,9 @@ export const tripApi = {
 export const itineraryApi = {
   getByTrip: (tripId: string): Promise<ItineraryResponse[]> =>
     apiClient.get(`/trips/${tripId}/itineraries`).then(r => r.data),
+
+  importItinerary: (tripId: string, days: ImportItineraryDay[]): Promise<ItineraryResponse[]> =>
+    apiClient.post(`/trips/${tripId}/import-itinerary`, { days }).then(r => r.data),
 
   regenerateDay: (tripId: string, itineraryId: string, body?: RegenerateRequest): Promise<ItineraryResponse> =>
     apiClient.post(`/trips/${tripId}/itineraries/${itineraryId}/regenerate`, body ?? {}).then(r => r.data),

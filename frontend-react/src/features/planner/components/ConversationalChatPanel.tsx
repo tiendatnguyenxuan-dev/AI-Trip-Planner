@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import type { TripResponse } from '../../../types/trip';
-import { tripApi } from '../../../services/api';
+import { tripApi, itineraryApi } from '../../../services/api';
 import { TEST_USER_ID } from '../../../types/trip';
 
 interface Message {
@@ -90,7 +90,7 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
       let createdTripId: string | undefined = undefined;
 
       if (isCompleted) {
-        // Auto-save completed trip to Spring Boot Backend DB for My Trips
+        // Auto-save completed trip + itinerary to Spring Boot DB
         try {
           const draft = data.trip_draft || {};
           const dest = draft.destination?.value || 'Điểm đến mới';
@@ -106,12 +106,33 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
             budget
           });
 
-          if (createdTrip && createdTrip.id) {
+          if (createdTrip?.id) {
             createdTripId = createdTrip.id;
-            try {
-              await tripApi.generate(createdTrip.id);
-            } catch (genErr) {
-              console.warn('Trip plan generation call error:', genErr);
+
+            // Import AI itinerary directly — no second AI call needed
+            const rawDays: Array<{ day: number; activities: string[] }> =
+              data.itinerary?.days || [];
+
+            if (rawDays.length > 0) {
+              // Map Python string-based activities to structured ImportItineraryDay format
+              const importDays = rawDays.map((d) => ({
+                dayNumber: d.day,
+                summary: `Ngày ${d.day} tại ${dest}`,
+                activities: (d.activities || []).map((actText: string, idx: number) => ({
+                  name: actText.replace(/^(Morning|Afternoon|Evening|Lunch|Dinner):\s*/i, '').trim(),
+                  description: actText,
+                  location: dest,
+                  startTime: ['08:00', '10:00', '12:00', '14:00', '18:00'][idx % 5],
+                  endTime:   ['10:00', '12:00', '13:30', '17:00', '20:00'][idx % 5],
+                  cost: 0,
+                }))
+              }));
+
+              try {
+                await itineraryApi.importItinerary(createdTrip.id, importDays);
+              } catch (importErr) {
+                console.warn('Import itinerary error:', importErr);
+              }
             }
           }
         } catch (saveErr) {

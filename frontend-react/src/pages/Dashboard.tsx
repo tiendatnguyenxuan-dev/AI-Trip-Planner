@@ -64,7 +64,13 @@ export default function Dashboard() {
             {plannedTrips.map(trip => (
               <div
                 key={trip.id}
-                onClick={() => navigate(`/itinerary/${trip.id}`)}
+                onClick={() => {
+                  if (trip.status === 'SELECTING_ACTIVITIES') {
+                    navigate(`/selection/${trip.id}`);
+                  } else {
+                    navigate(`/itinerary/${trip.id}`);
+                  }
+                }}
                 className="group bg-surface rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-all cursor-pointer border border-primary/5 flex flex-col"
               >
                 <div className="relative h-64 overflow-hidden">
@@ -100,10 +106,7 @@ export default function Dashboard() {
                     <div className="flex flex-col">
                       <span className="text-[10px] font-bold text-text-muted/60 uppercase tracking-widest">Ngân sách</span>
                       <span className="text-sm font-bold text-text">
-                        {trip.totalCost > 0
-                          ? new Intl.NumberFormat('vi-VN').format(trip.totalCost)
-                          : new Intl.NumberFormat('vi-VN').format(trip.budget)
-                        } <span className="text-[10px]">VND</span>
+                        {new Intl.NumberFormat('vi-VN').format(trip.budget)} <span className="text-[10px]">VND</span>
                       </span>
                     </div>
                     <div className="flex flex-col items-end">

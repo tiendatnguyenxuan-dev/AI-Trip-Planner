@@ -66,6 +66,21 @@ export interface ItineraryResponse {
   activities: ActivityResponse[];
 }
 
+export interface ImportItineraryActivity {
+  name: string;
+  description?: string;
+  location?: string;
+  startTime?: string; // "HH:mm"
+  endTime?: string;   // "HH:mm"
+  cost?: number;
+}
+
+export interface ImportItineraryDay {
+  dayNumber: number;
+  summary?: string;
+  activities: ImportItineraryActivity[];
+}
+
 export interface GenerateResponse {
   tripId: string;
   status: TripStatus;
