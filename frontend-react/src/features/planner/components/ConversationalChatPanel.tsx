@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import type { TripResponse } from '../../../types/trip';
 import { tripApi, itineraryApi } from '../../../services/api';
-import { TEST_USER_ID } from '../../../types/trip';
+import { useAuth } from '../../../context/AuthContext';
+import { AuthModal } from '../../../components/auth/AuthModal';
 
 interface Message {
   id: string;
@@ -12,6 +14,7 @@ interface Message {
   content: string;
   isCompleted?: boolean;
   createdTripId?: string;
+  tripDraftData?: any;
 }
 
 interface ConversationalChatPanelProps {
@@ -26,8 +29,11 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
   onDestinationChanged
 }) => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<{ path: string; msg?: Message } | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -52,6 +58,92 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
     scrollToBottom();
   }, [messages, isSending]);
 
+  const saveTripToDatabase = async (msg: Message, targetUserId: string) => {
+    if (!msg.tripDraftData) return msg.createdTripId;
+
+    try {
+      const draft = msg.tripDraftData.trip_draft || {};
+      const itinerary = msg.tripDraftData.itinerary || {};
+      const dest = draft.destination?.value || 'Điểm đến mới';
+      const duration = draft.duration_days?.value || 3;
+      const budget = draft.budget?.value || 5000000;
+
+      const createdTrip = await tripApi.create({
+        userId: targetUserId,
+        title: `Lịch trình AI: ${dest} (${duration} ngày)`,
+        destination: dest,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + duration * 86400000).toISOString().split('T')[0],
+        budget
+      });
+
+      if (createdTrip?.id) {
+        const rawDays: Array<{ day: number; activities: string[] }> = itinerary.days || [];
+        if (rawDays.length > 0) {
+          const importDays = rawDays.map((d) => ({
+            dayNumber: d.day,
+            summary: `Ngày ${d.day} tại ${dest}`,
+            activities: (d.activities || []).map((actText: string, idx: number) => ({
+              name: actText.replace(/^(Morning|Afternoon|Evening|Lunch|Dinner):\s*/i, '').trim(),
+              description: actText,
+              location: dest,
+              startTime: ['08:00', '10:00', '12:00', '14:00', '18:00'][idx % 5],
+              endTime: ['10:00', '12:00', '13:30', '17:00', '20:00'][idx % 5],
+              cost: 0,
+            }))
+          }));
+
+          try {
+            await itineraryApi.importItinerary(createdTrip.id, importDays);
+          } catch (importErr) {
+            console.warn('Import itinerary error:', importErr);
+          }
+        }
+        return createdTrip.id;
+      }
+    } catch (err) {
+      console.error('Error saving trip for logged in user:', err);
+    }
+    return msg.createdTripId;
+  };
+
+  const handleActionClick = async (targetPath: string, msg: Message) => {
+    if (!isAuthenticated) {
+      setPendingNavigation({ path: targetPath, msg });
+      setIsAuthModalOpen(true);
+    } else {
+      let finalTripId = msg.createdTripId;
+      if (user?.id) {
+        finalTripId = await saveTripToDatabase(msg, user.id);
+      }
+      navigate(targetPath === 'ITINERARY' ? (finalTripId ? `/itinerary/${finalTripId}` : '/my-trips') : '/my-trips');
+    }
+  };
+
+  const handleAuthSuccess = async () => {
+    if (pendingNavigation) {
+      const activeUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = activeUser.id;
+
+      if (!userId) {
+        toast.error('Không tìm thấy thông tin tài khoản vừa đăng nhập!');
+        return;
+      }
+
+      let finalTripId = pendingNavigation.msg?.createdTripId;
+      if (pendingNavigation.msg) {
+        finalTripId = await saveTripToDatabase(pendingNavigation.msg, userId);
+      }
+
+      const target = pendingNavigation.path === 'ITINERARY'
+        ? (finalTripId ? `/itinerary/${finalTripId}` : '/my-trips')
+        : '/my-trips';
+
+      setPendingNavigation(null);
+      navigate(target);
+    }
+  };
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputPrompt.trim() || isSending) return;
@@ -69,7 +161,6 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
     setIsSending(true);
 
     try {
-      // 1. Primary: Call Phase 5 Conversational Plan AI Service (port 8000)
       const aiServiceUrl = 'http://localhost:8000/ai/conversational-plan';
       const response = await axios.post(aiServiceUrl, {
         session_id: sessionId,
@@ -80,7 +171,6 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
       if (data.session_id) setSessionId(data.session_id);
       if (data.progress !== undefined) setProgress(Math.round(data.progress * 100));
 
-      // Check resolved destination and trigger map animation
       if (data.trip_draft?.destination?.value && onDestinationChanged) {
         onDestinationChanged(data.trip_draft.destination.value);
       }
@@ -89,8 +179,7 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
       const assistantContent = data.message || 'Đã nhận được thông tin của bạn.';
       let createdTripId: string | undefined = undefined;
 
-      if (isCompleted) {
-        // Auto-save completed trip + itinerary to Spring Boot DB
+      if (isCompleted && isAuthenticated && user?.id) {
         try {
           const draft = data.trip_draft || {};
           const dest = draft.destination?.value || 'Điểm đến mới';
@@ -98,7 +187,7 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
           const budget = draft.budget?.value || 5000000;
 
           const createdTrip = await tripApi.create({
-            userId: TEST_USER_ID,
+            userId: user.id,
             title: `Lịch trình AI: ${dest} (${duration} ngày)`,
             destination: dest,
             startDate: new Date().toISOString().split('T')[0],
@@ -108,13 +197,8 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
 
           if (createdTrip?.id) {
             createdTripId = createdTrip.id;
-
-            // Import AI itinerary directly — no second AI call needed
-            const rawDays: Array<{ day: number; activities: string[] }> =
-              data.itinerary?.days || [];
-
+            const rawDays: Array<{ day: number; activities: string[] }> = data.itinerary?.days || [];
             if (rawDays.length > 0) {
-              // Map Python string-based activities to structured ImportItineraryDay format
               const importDays = rawDays.map((d) => ({
                 dayNumber: d.day,
                 summary: `Ngày ${d.day} tại ${dest}`,
@@ -127,12 +211,7 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
                   cost: 0,
                 }))
               }));
-
-              try {
-                await itineraryApi.importItinerary(createdTrip.id, importDays);
-              } catch (importErr) {
-                console.warn('Import itinerary error:', importErr);
-              }
+              await itineraryApi.importItinerary(createdTrip.id, importDays);
             }
           }
         } catch (saveErr) {
@@ -145,7 +224,8 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
         role: 'assistant',
         content: assistantContent,
         isCompleted,
-        createdTripId
+        createdTripId,
+        tripDraftData: data
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
@@ -247,14 +327,14 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
                 {msg.isCompleted && (
                   <div className="mt-3 space-y-2">
                     <button
-                      onClick={() => navigate(msg.createdTripId ? `/itinerary/${msg.createdTripId}` : '/my-trips')}
+                      onClick={() => handleActionClick('ITINERARY', msg)}
                       className="w-full py-2.5 px-4 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-base">map</span>
                       Xem Lịch trình chi tiết ngay ➔
                     </button>
                     <button
-                      onClick={() => navigate('/my-trips')}
+                      onClick={() => handleActionClick('MY_TRIPS', msg)}
                       className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 transition-all cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-base">folder_open</span>
@@ -274,22 +354,31 @@ export const ConversationalChatPanel: React.FC<ConversationalChatPanelProps> = (
         )}
       </div>
 
-      <form onSubmit={handleSendMessage} className="mt-3 flex items-center gap-2 pt-2 border-t border-slate-200">
+      <form onSubmit={handleSendMessage} className="mt-3 relative flex items-center">
         <input
           type="text"
           value={inputPrompt}
           onChange={(e) => setInputPrompt(e.target.value)}
           placeholder="VD: Thay nhà hàng Ngày 2 bằng quán ăn chay..."
-          className="flex-1 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 shadow-sm transition"
+          disabled={isSending}
+          className="w-full bg-white border border-slate-300/80 rounded-xl py-2.5 pl-4 pr-12 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-xs font-medium transition shadow-sm"
         />
         <button
           type="submit"
           disabled={!inputPrompt.trim() || isSending}
-          className="p-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white transition flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
+          className="absolute right-1.5 p-1.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white rounded-lg transition"
         >
           <Send className="w-4 h-4" />
         </button>
       </form>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+        title="Đăng nhập để lưu & xem lịch trình"
+        subtitle="Vui lòng đăng nhập hoặc tạo tài khoản miễn phí để lưu toàn bộ lịch trình du lịch cá nhân hóa này vào tài khoản của bạn."
+      />
     </div>
   );
 };

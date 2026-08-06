@@ -20,9 +20,25 @@ export default function Itinerary() {
   const navigate = useNavigate();
 
   // Active Phase 6 State
-  const [activeDay, setActiveDay] = useState(1);
   const [selectedActivity, setSelectedActivity] = useState<ActivityResponse | null>(null);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!tripId) return;
+    setGenerating(true);
+    try {
+      await tripApi.generate(tripId, {
+        language: 'Vietnamese',
+      });
+      toast.success('AI đang bắt đầu tạo danh mục hoạt động gợi ý!');
+      refetch();
+    } catch {
+      toast.error('Không thể kích hoạt lại AI. Vui lòng thử lại sau!');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ['itinerary', tripId],
@@ -51,7 +67,31 @@ export default function Itinerary() {
   }, [trip, navigate]);
 
   if (loading || trip?.status === 'SELECTING_ACTIVITIES') return <LoadingSkeleton />;
-  if (trip?.status === 'GENERATING') return <GeneratingOverlay />;
+  if (generating || trip?.status === 'GENERATING') return <GeneratingOverlay />;
+
+  if (trip?.status === 'PLANNING') {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] gap-6 text-white bg-slate-950">
+        <div className="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <span className="material-symbols-outlined text-4xl animate-pulse">auto_awesome</span>
+        </div>
+        <div className="text-center max-w-md space-y-2">
+          <h2 className="text-xl font-bold text-white">Chưa tạo lịch trình gợi ý</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Chuyến đi của bạn chưa có lịch trình hoặc quá trình sinh dữ liệu gợi ý trước đó bị gián đoạn.
+          </p>
+        </div>
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-50"
+        >
+          <span className="material-symbols-outlined text-sm">auto_awesome</span>
+          Bắt đầu tạo lịch trình với AI
+        </button>
+      </div>
+    );
+  }
 
   if (isError || !trip) {
     return (
@@ -66,8 +106,7 @@ export default function Itinerary() {
   }
 
   const sortedItineraries = [...itineraries].sort((a, b) => a.dayNumber - b.dayNumber);
-  const currentItinerary = sortedItineraries.find((i) => i.dayNumber === activeDay) || sortedItineraries[0];
-  const activeActivities = currentItinerary?.activities || [];
+  const allActivities = sortedItineraries.flatMap((i) => i.activities || []);
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-950 text-slate-100 flex flex-col">
@@ -97,7 +136,7 @@ export default function Itinerary() {
         {/* Left Column: Interactive Leaflet Map (6 cols) */}
         <div className="lg:col-span-6 h-[500px] lg:h-full relative">
           <InteractiveMap
-            activities={activeActivities}
+            activities={allActivities}
             selectedActivityId={selectedActivity?.id || null}
             onSelectActivity={(act) => setSelectedActivity(act)}
             destinationName={trip.destination}
@@ -114,11 +153,6 @@ export default function Itinerary() {
         <div className="lg:col-span-3 h-[500px] lg:h-full">
           <SyncTimelineView
             itineraries={sortedItineraries}
-            activeDay={activeDay}
-            onSelectDay={(dayNum) => {
-              setActiveDay(dayNum);
-              setSelectedActivity(null);
-            }}
             selectedActivityId={selectedActivity?.id || null}
             onSelectActivity={(act) => setSelectedActivity(act)}
           />

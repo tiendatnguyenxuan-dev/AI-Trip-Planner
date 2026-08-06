@@ -32,13 +32,17 @@ function App() {
             {/* Public User Routes */}
             <Route element={<UserLayout />}>
               <Route index element={<Explore />} />
-              <Route path="/my-trips" element={<Dashboard />} />
-              <Route path="/plan" element={<PlanTrip />} />
               <Route path="/community" element={<CommunityFeed />} />
-              <Route path="/profile" element={<UserProfileView />} />
               <Route path="/explore" element={<Navigate to="/" replace />} />
-              <Route path="/selection/:id" element={<ActivitySelection />} />
-              <Route path="/itinerary/:id" element={<Itinerary />} />
+
+              {/* Protected User Routes (Require Login) */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/my-trips" element={<Dashboard />} />
+                <Route path="/plan" element={<PlanTrip />} />
+                <Route path="/profile" element={<UserProfileView />} />
+                <Route path="/selection/:id" element={<ActivitySelection />} />
+                <Route path="/itinerary/:id" element={<Itinerary />} />
+              </Route>
             </Route>
 
             {/* Protected Admin Routes */}

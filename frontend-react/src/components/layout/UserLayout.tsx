@@ -1,9 +1,12 @@
+import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { BellNotification } from './BellNotification';
+import { AuthModal } from '../auth/AuthModal';
 
 export default function UserLayout() {
-  const { user } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
     <div className="bg-background text-on-surface flex min-h-screen font-body">
@@ -27,6 +30,12 @@ export default function UserLayout() {
             </NavLink>
             <NavLink 
               to="/my-trips" 
+              onClick={(e) => {
+                if (!isAuthenticated) {
+                  e.preventDefault();
+                  setIsAuthModalOpen(true);
+                }
+              }}
               className={({ isActive }) => `px-6 py-2 rounded-full text-sm font-bold transition-all ${isActive ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
               My Trips
@@ -46,14 +55,25 @@ export default function UserLayout() {
                 <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{user?.name || 'Khách'}</p>
                 <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">{user?.role || 'Guest'}</p>
               </div>
-              <NavLink
-                to="/"
-                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition-all shadow-md active:scale-95 flex items-center gap-1 cursor-pointer"
-                title="Đăng nhập"
-              >
-                <span className="material-symbols-outlined text-sm">login</span>
-                Đăng nhập
-              </NavLink>
+              {isAuthenticated ? (
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition-all shadow-sm flex items-center gap-1 cursor-pointer"
+                  title="Đăng xuất"
+                >
+                  <span className="material-symbols-outlined text-sm">logout</span>
+                  Đăng xuất
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition-all shadow-md active:scale-95 flex items-center gap-1 cursor-pointer"
+                  title="Đăng nhập"
+                >
+                  <span className="material-symbols-outlined text-sm">login</span>
+                  Đăng nhập
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -74,7 +94,16 @@ export default function UserLayout() {
             </>
           )}
         </NavLink>
-        <NavLink to="/my-trips" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-slate-400'}`}>
+        <NavLink 
+          to="/my-trips" 
+          onClick={(e) => {
+            if (!isAuthenticated) {
+              e.preventDefault();
+              setIsAuthModalOpen(true);
+            }
+          }}
+          className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-slate-400'}`}
+        >
           {({ isActive }) => (
             <>
               <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "" }}>dashboard</span>
@@ -82,7 +111,16 @@ export default function UserLayout() {
             </>
           )}
         </NavLink>
-        <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-slate-400'}`}>
+        <NavLink 
+          to="/profile" 
+          onClick={(e) => {
+            if (!isAuthenticated) {
+              e.preventDefault();
+              setIsAuthModalOpen(true);
+            }
+          }}
+          className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-slate-400'}`}
+        >
           {({ isActive }) => (
             <>
               <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "" }}>person</span>
@@ -91,6 +129,12 @@ export default function UserLayout() {
           )}
         </NavLink>
       </nav>
+
+      {/* Auth Modal for Quick Login */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }

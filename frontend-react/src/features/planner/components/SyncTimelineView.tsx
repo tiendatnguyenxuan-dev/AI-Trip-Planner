@@ -1,61 +1,33 @@
 import React from 'react';
 import type { ActivityResponse, ItineraryResponse } from '../../../types/trip';
-import { MapPin, DollarSign, Calendar, Sparkles } from 'lucide-react';
+import { MapPin, Sparkles, Navigation } from 'lucide-react';
 
 interface SyncTimelineViewProps {
   itineraries: ItineraryResponse[];
-  activeDay: number;
-  onSelectDay: (dayNumber: number) => void;
   selectedActivityId: string | null;
   onSelectActivity: (activity: ActivityResponse) => void;
 }
 
 export const SyncTimelineView: React.FC<SyncTimelineViewProps> = ({
   itineraries,
-  activeDay,
-  onSelectDay,
   selectedActivityId,
   onSelectActivity
 }) => {
-  const currentItin = itineraries.find((i) => i.dayNumber === activeDay) || itineraries[0];
+  // Flatten all activities across itineraries so user can order/view planned places directly
+  const allActivities = itineraries.flatMap((itin) => itin.activities || []);
 
   return (
     <div className="flex flex-col h-full bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-700/60 p-4 shadow-xl">
-      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-3 border-b border-slate-800 scrollbar-none">
-        {itineraries.map((itin) => {
-          const isActive = itin.dayNumber === activeDay;
-          return (
-            <button
-              key={itin.id || itin.dayNumber}
-              onClick={() => onSelectDay(itin.dayNumber)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                isActive
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-700/80'
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              Ngày {itin.dayNumber}
-            </button>
-          );
-        })}
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+        <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+          <Navigation className="w-4 h-4 text-emerald-400" />
+          Danh sách địa điểm đã lên kế hoạch ({allActivities.length})
+        </h3>
       </div>
 
-      {currentItin && (
-        <div className="bg-slate-800/40 p-3 rounded-xl border border-slate-700/40 mb-4">
-          <h4 className="text-xs font-semibold text-indigo-400 flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5" />
-            Tóm tắt Ngày {currentItin.dayNumber}
-          </h4>
-          <p className="text-xs text-slate-300 mt-1 leading-snug">
-            {currentItin.summary || 'Lịch trình tham quan & trải nghiệm được cá nhân hóa.'}
-          </p>
-        </div>
-      )}
-
       <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-        {currentItin && currentItin.activities && currentItin.activities.length > 0 ? (
-          currentItin.activities.map((act, index) => {
+        {allActivities.length > 0 ? (
+          allActivities.map((act, index) => {
             const isSelected = act.id === selectedActivityId;
             return (
               <div
@@ -98,7 +70,7 @@ export const SyncTimelineView: React.FC<SyncTimelineViewProps> = ({
             );
           })
         ) : (
-          <div className="text-center py-8 text-xs text-slate-400">Chưa có hoạt động nào cho ngày này.</div>
+          <div className="text-center py-8 text-xs text-slate-400">Chưa có địa điểm nào trong kế hoạch.</div>
         )}
       </div>
     </div>
